@@ -11,5 +11,5 @@
 ----------------------------------------------------------------------
 
 For more info see: 
-TransferFiles/Current/Docs/index.html
+TransferFiles/Docs/index.html
 
