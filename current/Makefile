@@ -88,19 +88,15 @@ $(TARGET1): $(OBJECTS1)
 	$(CC) $(CFLAGS) -o $@ $^
 
 main.o: main.c network.h options.h clock.h base.h
-	@echo Compiling $<
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clock.o: clock.c clock.h base.h
-	@echo Compiling $<
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 options.o: options.c options.h base.h
-	@echo Compiling $<
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 network.o: network.c network.h base.h
-	@echo Compiling $<
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 #############################################################################################
@@ -123,17 +119,14 @@ debug:  all
 dist:   checksum $(ARCHIVE)src.tgz
 
 $(ARCHIVE)src.tgz: $(ARCHIVE)src.tar.gz
-	@echo
 	@echo Renaming...
 	cd .. && mv --verbose --force $< $@
 
 $(ARCHIVE)src.tar.gz: $(ARCHIVE)src.tar
-	@echo
 	@echo Creating gzip-archive $@ ...
 	cd .. && gzip --verbose --force --best $<
 
 $(ARCHIVE)src.tar:
-	@echo
 	@echo Creating tar-archive $@ ...
 	cd .. && tar --verbose --create --recursion --force-local --file $@ *
 
@@ -168,13 +161,13 @@ list:
 #############################################################################################
 
 help:
-	-cat README.txt
+	-cat ../README.txt
 
 license:
-	-cat COPYING
+	-cat ../LICENSE
 
 warranty:
-	-cat COPYING
+	-cat ../COPYING
 
 #############################################################################################
 #                Delete all files that are normally created by running make.                #
