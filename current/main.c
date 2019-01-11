@@ -153,6 +153,10 @@ int main(int argc, char *argv[], char *env[]){
         if( !(MainData->Port) )     MainData->Port = "45678\0";
 
         NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;
+
+        MainData->Flags = oFlags;
+        MainData->Files = oCurrent;
+        free(oIndexes);
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
         /* Configuring the network connections ------------------------------------------------------------- */
@@ -170,14 +174,11 @@ int main(int argc, char *argv[], char *env[]){
                     if( oFlags & OPTION_SERVER )
                         if( !( bind((NewConnection->Socket.Handle),(Handle->ai_addr),(Handle->ai_addrlen)) ) )  listen((NewConnection->Socket.Handle),0);
 
-                if( !(oFlags & OPTION_QUIET) )  printf("- (%d) %s \r\n",errno,strerror(errno));
+                if( !(oFlags & OPTION_QUIET) )  printf("- (%d/%d) %s \r\n",(NewConnection->Socket.Handle),errno,strerror(errno));
+                if( !errno )  {   MainData->Network.nConnections++; NewConnection++;   };
             };
         }while( Handle = Handle->ai_next );
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-        MainData->Flags = oFlags;
-        MainData->Files = oCurrent;
-        free(oIndexes);
     };
 
     /* Initializating timer */
