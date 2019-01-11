@@ -163,15 +163,14 @@ int main(int argc, char *argv[], char *env[]){
         do
         {   if( NetworkConfigureNext(Handle,NewConnection) )
             {
-                if( !(oFlags & OPTION_QUIET) )  printf("   Configuring connection: [ %s @%s ] ... ",&(NewConnection->HostInfo.HostName[0]),
-                                                                                                    &(NewConnection->HostInfo.PortName[0]));
+                if( !(oFlags & OPTION_QUIET) )  printf("     Configuring connection: [ %s @%s ] ",&(NewConnection->HostInfo.HostName[0]),
+                                                                                                  &(NewConnection->HostInfo.PortName[0]));
 
-                if( NewConnection->Socket.Handle = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol)) )
+                if( ( NewConnection->Socket.Handle = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol)) ) >= 0 )
                     if( oFlags & OPTION_SERVER )
-                    {
+                        if( !( bind((NewConnection->Socket.Handle),(Handle->ai_addr),(Handle->ai_addrlen)) ) )  listen((NewConnection->Socket.Handle),0);
 
-                    };
-                if( !(oFlags & OPTION_QUIET) )  printf(" (%d) %s \r\n",errno,strerror(errno));
+                if( !(oFlags & OPTION_QUIET) )  printf("- (%d) %s \r\n",errno,strerror(errno));
             };
         }while( Handle = Handle->ai_next );
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

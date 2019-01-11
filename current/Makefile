@@ -146,7 +146,7 @@ checking:
 #############################################################################################
 
 list:
-	-ls --format=long --color=always --almost-all --recursive --group-directories-first --sort=extension --time-style=long-iso --file-type ..
+	-ls --format=long --color=always --recursive --group-directories-first --sort=extension --time-style=long-iso --file-type ..
 
 #############################################################################################
 #                                                                                           #
