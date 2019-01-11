@@ -98,6 +98,8 @@ int main(int argc, char *argv[], char *env[]){
 
     if( argc > 1 )
     {
+        struct CONNECT_INFO   *NewConnection = &(MainData->Network.iConnection[0]);
+
         unsigned int  oMax;
         unsigned int  oID;         // Option ID;
         unsigned int  oCurrent;    // Current index;
@@ -120,7 +122,7 @@ int main(int argc, char *argv[], char *env[]){
         if( oFlags & OPTION_DEBUG ) /* Show some debug info ------------------------------------------------ */
         {
             ShowVersion();
-            printf(" Allocating %u+%u bytes...  OK \r\n\r\n Parsing options: \r\n",sizeof(struct MAIN_DATA),oMax*sizeof(unsigned int));
+            printf(" Allocating (%u+%u) bytes...  OK \r\n\r\n Parsing options: \r\n",sizeof(struct MAIN_DATA),oMax*sizeof(unsigned int));
             for(unsigned int i=1; i<oMax; i++)  if( oID = *(oIndexes+i) )  printf("\t % 2u:% 2u: %s \r\n",i,oID,GetOptionHelp(1<<(i-1)));
             oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
         };
@@ -128,15 +130,15 @@ int main(int argc, char *argv[], char *env[]){
 
         switch( oFlags & (OPTION_IPV4|OPTION_IPV6) ) /* Initializing the network structures and flags ------ */
         {
-            case OPTION_IPV4:    MainData->Network.iConnection[0].AddrInfo.ai_family = AF_INET;  break;       // - the case for a "IPv4" option;
-            case OPTION_IPV6:    MainData->Network.iConnection[0].AddrInfo.ai_family = AF_INET6;  break;      // - the case for a "IPv6" option;
-            default:             MainData->Network.iConnection[0].AddrInfo.ai_family = AF_UNSPEC;  break;     // - the case for a default IP-protocol;
+            case OPTION_IPV4:    NewConnection->AddrInfo.ai_family = AF_INET;  break;                         // - the case for a "IPv4" option;
+            case OPTION_IPV6:    NewConnection->AddrInfo.ai_family = AF_INET6;  break;                        // - the case for a "IPv6" option;
+            default:             NewConnection->AddrInfo.ai_family = AF_UNSPEC;  break;                       // - the case for a default IP-protocol;
         };
         switch( oFlags & (OPTION_SERVER|OPTION_CLIENT) )
         {
             case 0:              oFlags = oFlags|OPTION_SERVER;
 
-            case OPTION_SERVER:  MainData->Network.iConnection[0].AddrInfo.ai_flags|= AI_PASSIVE;             // - the case for a "server" option;
+            case OPTION_SERVER:  NewConnection->AddrInfo.ai_flags|= AI_PASSIVE;                               // - the case for a "server" option;
                                  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a server... ");
                                  MainData->Host = GetOptionVar(OPTION_SERVER);  break;
 
@@ -148,15 +150,30 @@ int main(int argc, char *argv[], char *env[]){
                                      argv[ *(oIndexes + GetOptionIndex(OPTION_CLIENT)) ]);  break;
         };
         if( oFlags & OPTION_PORT )  MainData->Port = GetOptionVar(OPTION_PORT);
-        if( !(MainData->Port) )  MainData->Port = "45678\0";
+        if( !(MainData->Port) )     MainData->Port = "45678\0";
+
+        NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
         /* Configuring the network connections ------------------------------------------------------------- */
-        struct addrinfo *Handle = NetworkConfigureInit((MainData->Host),(MainData->Port),&(MainData->Network.iConnection[0]));
+        struct addrinfo *Handle = NetworkConfigureInit((MainData->Host),(MainData->Port),NewConnection);
         if( !Handle )
-            error(EINVAL,EINVAL," Error: (%d) %s /",(MainData->Network.iConnection[0].Socket.ErrCode),
-                                                   &(MainData->Network.iConnection[0].Socket.ErrMsg[0]));
+            error(EINVAL,EINVAL," Error: (%d) %s /",(NewConnection->Socket.ErrCode),
+                                                   &(NewConnection->Socket.ErrMsg[0]));
+        do
+        {   if( NetworkConfigureNext(Handle,NewConnection) )
+            {
+                if( !(oFlags & OPTION_QUIET) )  printf("   Configuring connection: [ %s @%s ] ... ",&(NewConnection->HostInfo.HostName[0]),
+                                                                                                    &(NewConnection->HostInfo.PortName[0]));
 
+                if( NewConnection->Socket.Handle = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol)) )
+                    if( oFlags & OPTION_SERVER )
+                    {
+
+                    };
+                if( !(oFlags & OPTION_QUIET) )  printf(" (%d) %s \r\n",errno,strerror(errno));
+            };
+        }while( Handle = Handle->ai_next );
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
         MainData->Flags = oFlags;
