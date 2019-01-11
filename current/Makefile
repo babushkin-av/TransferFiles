@@ -118,17 +118,9 @@ debug:  all
 
 dist:   checksum $(ARCHIVE)src.tgz
 
-$(ARCHIVE)src.tgz: $(ARCHIVE)src.tar.gz
-	@echo Renaming...
-	cd .. && mv --verbose --force $< $@
-
-$(ARCHIVE)src.tar.gz: $(ARCHIVE)src.tar
-	@echo Creating gzip-archive $@ ...
-	cd .. && gzip --verbose --force --best $<
-
-$(ARCHIVE)src.tar:
+$(ARCHIVE)src.tgz:
 	@echo Creating tar-archive $@ ...
-	cd .. && tar --verbose --create --recursion --force-local --file $@ *
+	cd ../.. && tar --verbose --create --gzip --recursion --force-local --file $@ $(PROJECT)/*
 
 #############################################################################################
 #                       Create a checksum file of the source files.                         #
@@ -175,10 +167,11 @@ warranty:
 
 clean:
 	@echo Cleaning...
-	-rm --verbose --force *~ .fuse* *.o *.code *.lst
+	-rm --verbose --force --recursive --one-file-system *~ ../*~ ../docs/*~
+	-rm --verbose --force *.d *.o *.ko *.obj *.elf *.code *.map *.exp *.gch *.pch *.idb *.pdb .fuse* *.ilk
 
 cleanall: clean
-	-rm --verbose --force $(TARGETS) $(CHKFILE) *.log *.dat
+	-rm --verbose --force *.log *.dat *.lst *.hex *.lib *.so *.out *.dll *.exe $(TARGETS) $(CHKFILE)
 
 #############################################################################################
 #    Copy the executable file into a directory that users typically search for commands.    #
