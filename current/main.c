@@ -143,7 +143,8 @@ int main(int argc, char *argv[], char *env[]){
                                  MainData->Host = GetOptionVar(OPTION_SERVER);  break;
 
             case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client... ");          // - the case for a "client" option;
-                                 MainData->Host = GetOptionVar(OPTION_CLIENT);  break;
+                                 MainData->Host = GetOptionVar(OPTION_CLIENT);
+                                 break;
 
             default:             error(EINVAL,EINVAL," Error: ambigous options: '%s' and '%s'. ",             // - detecting ambiguous options.
                                      argv[ *(oIndexes + GetOptionIndex(OPTION_SERVER)) ],
@@ -152,7 +153,7 @@ int main(int argc, char *argv[], char *env[]){
         if( oFlags & OPTION_PORT )  MainData->Port = GetOptionVar(OPTION_PORT);                               //
         if( !(MainData->Port) )     MainData->Port = "45678\0";                                               //
 
-        NewConnection->AddrInfo.ai_protocol = IPPROTO_IP;                                                     // Specifing the protocol and
+        NewConnection->AddrInfo.ai_protocol = IPPROTO_TCP;                                                    // Specifing the protocol and
         NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;                                                    // the preferred socket type.
 
         MainData->Flags = oFlags;
@@ -162,37 +163,41 @@ int main(int argc, char *argv[], char *env[]){
 
         /* Configuring the network connections ------------------------------------------------------------- */
         struct addrinfo *Handle = NetworkConfigureInit((MainData->Host),(MainData->Port),NewConnection);
-        if( !Handle )
-Exit01:     error(EINVAL,EINVAL," Error: (%d) %s /",(NewConnection->Socket.ErrCode),
-                                                   &(NewConnection->Socket.ErrMsg[0]));
-        do
-        {   if( !( NetworkConfigureNext(Handle,NewConnection) ) )  goto Exit01;
-            if( !(oFlags & OPTION_QUIET) )  printf("     Configuring connection: [ %s @%s ] ",&(NewConnection->HostInfo.HostName[0]),
-                                                                                              &(NewConnection->HostInfo.PortName[0]));
+        while( Handle )
+        {
+            errno = 0;
 
+            if( !( NetworkConfigureNext(Handle,NewConnection) ) )  break;
+            if( !(oFlags & OPTION_QUIET) )
+            {
+                char *ConfStr;
+                if( oFlags & OPTION_CLIENT )  ConfStr = "Connecting to";  else
+                                              ConfStr = "Configuring connection";
+                printf("     %s: [ %s @%s ] ",ConfStr,&(NewConnection->HostInfo.HostName[0]),
+                                                      &(NewConnection->HostInfo.PortName[0]));
+                fflush(stdout);
+            };
             int Socket = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol));
             if( Socket >= 0 )
             {
-                if( oFlags & OPTION_SERVER )
+                if( oFlags & OPTION_CLIENT )
+                    connect(Socket,(Handle->ai_addr),(Handle->ai_addrlen));  else
                     if( !( bind(Socket,(Handle->ai_addr),(Handle->ai_addrlen)) ) )  listen(Socket,0);
-
-                if( oFlags & OPTION_CLIENT )  connect(Socket,(Handle->ai_addr),(Handle->ai_addrlen));
             };
+            Handle = Handle->ai_next;
+
             if( !(oFlags & OPTION_QUIET) )  printf("- (%d/%d) %s \r\n",Socket,errno,strerror(errno));
-            if( !errno )
-            {   NewConnection->Socket.Handle = Socket;
-                NewConnection++;
-                MainData->Network.nConnections++;
-                continue;
-            };
-            if( Socket >= 0 )  close(Socket);
+            if( errno )  {   close(Socket);  continue;   };
 
-        }while( Handle = Handle->ai_next );
+            NewConnection->Socket.Handle = Socket;
+            NewConnection++;
+            MainData->Network.nConnections++;
+        };
+        if( (!Handle)&&(!MainData->Network.nConnections) )
+            error(EINVAL,EINVAL," Error: there is no valid connections (%d) %s /",(NewConnection->Socket.ErrCode),
+                                                                                 &(NewConnection->Socket.ErrMsg[0]));
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     };
-
-    /* Initializating timer */
-    GetLocalTime(&(MainData->Time),NULL);
 
     /* Initializating signal handlers */
     MainData->Signals.sa_handler = (SignalHandler);
@@ -212,6 +217,7 @@ Exit01:     error(EINVAL,EINVAL," Error: (%d) %s /",(NewConnection->Socket.ErrCo
                 if( !(oFlags & OPTION_QUIET) )  printf(" Network initialization... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;
                 if( !(oFlags & OPTION_QUIET) )  puts(" OK ");
+                GetLocalTime(&(MainData->Time),NULL);       // Initializating timer
                 MainData->Status = STATUS_CONFIGURE;
                 break;
 

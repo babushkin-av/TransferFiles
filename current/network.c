@@ -43,7 +43,6 @@ struct addrinfo* NetworkConfigureInit(char *Host, char *Port, struct CONNECT_INF
     {
         strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(gaiResult),APP_NAME_MAX);
         iConn->Socket.ErrCode = gaiResult;
-        freeaddrinfo(resTmp);
         resTmp = NULL;
     };
 return(resTmp); }
@@ -63,7 +62,7 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
         iConn->Socket.ErrCode = gaiResult;
         return(false);
     };
-    if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(WorkingHost->HostName[0]),APP_NAME_MAX,&(WorkingHost->PortName[0]),NI_MAXSERV,NI_NAMEREQD) )
+    if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(WorkingHost->HostName[0]),APP_NAME_MAX,&(WorkingHost->PortName[0]),NI_MAXSERV,NI_NAMEREQD|NI_NUMERICSERV) )
     {
         strcpy(&(WorkingHost->HostName[0]),&(WorkingHost->HostNum[0]));
         strcpy(&(WorkingHost->PortName[0]),&(WorkingHost->PortNum[0]));
