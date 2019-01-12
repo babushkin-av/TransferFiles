@@ -149,10 +149,11 @@ int main(int argc, char *argv[], char *env[]){
                                      argv[ *(oIndexes + GetOptionIndex(OPTION_SERVER)) ],
                                      argv[ *(oIndexes + GetOptionIndex(OPTION_CLIENT)) ]);  break;
         };
-        if( oFlags & OPTION_PORT )  MainData->Port = GetOptionVar(OPTION_PORT);
-        if( !(MainData->Port) )     MainData->Port = "45678\0";
+        if( oFlags & OPTION_PORT )  MainData->Port = GetOptionVar(OPTION_PORT);                               //
+        if( !(MainData->Port) )     MainData->Port = "45678\0";                                               //
 
-        NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;
+        NewConnection->AddrInfo.ai_protocol = IPPROTO_IP;                                                     // Specifing the protocol and
+        NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;                                                    // the preferred socket type.
 
         MainData->Flags = oFlags;
         MainData->Files = oCurrent;
@@ -162,21 +163,30 @@ int main(int argc, char *argv[], char *env[]){
         /* Configuring the network connections ------------------------------------------------------------- */
         struct addrinfo *Handle = NetworkConfigureInit((MainData->Host),(MainData->Port),NewConnection);
         if( !Handle )
-            error(EINVAL,EINVAL," Error: (%d) %s /",(NewConnection->Socket.ErrCode),
+Exit01:     error(EINVAL,EINVAL," Error: (%d) %s /",(NewConnection->Socket.ErrCode),
                                                    &(NewConnection->Socket.ErrMsg[0]));
         do
-        {   if( NetworkConfigureNext(Handle,NewConnection) )
+        {   if( !( NetworkConfigureNext(Handle,NewConnection) ) )  goto Exit01;
+            if( !(oFlags & OPTION_QUIET) )  printf("     Configuring connection: [ %s @%s ] ",&(NewConnection->HostInfo.HostName[0]),
+                                                                                              &(NewConnection->HostInfo.PortName[0]));
+
+            int Socket = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol));
+            if( Socket >= 0 )
             {
-                if( !(oFlags & OPTION_QUIET) )  printf("     Configuring connection: [ %s @%s ] ",&(NewConnection->HostInfo.HostName[0]),
-                                                                                                  &(NewConnection->HostInfo.PortName[0]));
+                if( oFlags & OPTION_SERVER )
+                    if( !( bind(Socket,(Handle->ai_addr),(Handle->ai_addrlen)) ) )  listen(Socket,0);
 
-                if( ( NewConnection->Socket.Handle = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol)) ) >= 0 )
-                    if( oFlags & OPTION_SERVER )
-                        if( !( bind((NewConnection->Socket.Handle),(Handle->ai_addr),(Handle->ai_addrlen)) ) )  listen((NewConnection->Socket.Handle),0);
-
-                if( !(oFlags & OPTION_QUIET) )  printf("- (%d/%d) %s \r\n",(NewConnection->Socket.Handle),errno,strerror(errno));
-                if( !errno )  {   MainData->Network.nConnections++; NewConnection++;   };
+                if( oFlags & OPTION_CLIENT )  connect(Socket,(Handle->ai_addr),(Handle->ai_addrlen));
             };
+            if( !(oFlags & OPTION_QUIET) )  printf("- (%d/%d) %s \r\n",Socket,errno,strerror(errno));
+            if( !errno )
+            {   NewConnection->Socket.Handle = Socket;
+                NewConnection++;
+                MainData->Network.nConnections++;
+                continue;
+            };
+            if( Socket >= 0 )  close(Socket);
+
         }while( Handle = Handle->ai_next );
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     };
@@ -191,6 +201,7 @@ int main(int argc, char *argv[], char *env[]){
     /* Main message-loop queue */
     while( (oFlags=MainData->Flags) < OPTION_LAST )
     {
+        struct CONNECT_INFO       *Connection;
         static struct epoll_event  ePollEvent;
         int                        ePollHandle;
         int                        ePollReady;
@@ -201,11 +212,26 @@ int main(int argc, char *argv[], char *env[]){
                 if( !(oFlags & OPTION_QUIET) )  printf(" Network initialization... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;
                 if( !(oFlags & OPTION_QUIET) )  puts(" OK ");
-                MainData->Status++;
+                MainData->Status = STATUS_CONFIGURE;
                 break;
 
             case STATUS_CONFIGURE:
+                for(size_t i=0, iMax=(MainData->Network.nConnections); i<iMax; i++)
+                {
+                    Connection = &(MainData->Network.iConnection[i]);
 
+                    ePollEvent.events   = EPOLLIN|EPOLLOUT;
+                    ePollEvent.data.ptr = Connection;
+                    epoll_ctl(ePollHandle,EPOLL_CTL_ADD,(Connection->Socket.Handle),&ePollEvent);
+                };
+                if( oFlags & OPTION_SERVER )  MainData->Status = STATUS_SERVER_WAIT;  else
+                                              MainData->Status = STATUS_CLIENT_WAIT;
+                break;
+
+            case STATUS_CLIENT_WAIT:
+                printf(" ...");
+
+            case STATUS_CLIENT_CONNECT:
                 break;
 
         };
