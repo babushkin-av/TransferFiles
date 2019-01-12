@@ -94,23 +94,24 @@ int main(int argc, char *argv[], char *env[]){
 
     /* Memory allocation */
     if( !( MainData = (struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA)) ) )
-        error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
+Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
 
-    if( argc > 1 )
+    /* Initializating signal handler */
+    MainData->Signals.sa_handler = (SignalHandler);
+    if( !(SignalHandlerInit(&(MainData->Signals))) )
+        error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
+
+    if( argc > 1 ) /* Parsing command-line ----------------------------------------------------------------- */
     {
-        struct CONNECT_INFO   *NewConnection = &(MainData->Network.iConnection[0]);
+        struct CONNECT_INFO   *NewConnection = &(MainData->Network.iConnection[0]);                           //
 
-        unsigned int  oMax;
-        unsigned int  oID;         // Option ID;
-        unsigned int  oCurrent;    // Current index;
-        unsigned int *oIndexes;    // Temporary buffer for the indexes;
+        unsigned int  oMax;                                                                                   //
+        unsigned int  oID;                                                                                    // Option ID;
+        unsigned int  oCurrent;                                                                               // Current index;
+        unsigned int *oIndexes;                                                                               // Temporary buffer for the indexes.
 
-        /* Initializing indexes ---------------------------------------------------------------------------- */
-        if( !( oIndexes = (unsigned int*)calloc(oMax=GetOptionIndex(OPTION_LAST),sizeof(unsigned int)) ) )
-            error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
-        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-        /* Parsing command-line ---------------------------------------------------------------------------- */
+        if( !( oIndexes = (unsigned int*)calloc(oMax=GetOptionIndex(OPTION_LAST),sizeof(unsigned int)) ) )  goto Exit01;
+                                                                                                              // Initializing indexes.
         for(oCurrent=1; oID=GetOptionID(argv[oCurrent]); oCurrent++)
             switch(oID)                                                                                       // Recognizing a string:
             {   case OPTION_HELP:      ShowHelp();  exit(EXIT_SUCCESS);  break;                               // - the case for a "help" option;
@@ -143,8 +144,7 @@ int main(int argc, char *argv[], char *env[]){
                                  MainData->Host = GetOptionVar(OPTION_SERVER);  break;
 
             case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client... ");          // - the case for a "client" option;
-                                 MainData->Host = GetOptionVar(OPTION_CLIENT);
-                                 break;
+                                 MainData->Host = GetOptionVar(OPTION_CLIENT);  break;
 
             default:             error(EINVAL,EINVAL," Error: ambigous options: '%s' and '%s'. ",             // - detecting ambiguous options.
                                      argv[ *(oIndexes + GetOptionIndex(OPTION_SERVER)) ],
@@ -198,10 +198,6 @@ int main(int argc, char *argv[], char *env[]){
                                                                                  &(NewConnection->Socket.ErrMsg[0]));
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     };
-
-    /* Initializating signal handlers */
-    MainData->Signals.sa_handler = (SignalHandler);
-    if( !(SignalHandlerInit(&(MainData->Signals))) )  MainData->Flags|= OPTION_LAST;
 
     /* Main message-loop queue */
     while( (oFlags=MainData->Flags) < OPTION_LAST )
