@@ -151,7 +151,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
                                      argv[ *(oIndexes + GetOptionIndex(OPTION_CLIENT)) ]);  break;
         };
         if( oFlags & OPTION_PORT )  MainData->Port = GetOptionVar(OPTION_PORT);                               //
-        if( !(MainData->Port) )     MainData->Port = "45678\0";                                               //
+        if( !(MainData->Port) )     MainData->Port = "45678\0";                                               // Default port.
 
         NewConnection->AddrInfo.ai_protocol = IPPROTO_TCP;                                                    // Specifing the protocol and
         NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;                                                    // the preferred socket type.
@@ -196,16 +196,15 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         if( (!Handle)&&(!MainData->Network.nConnections) )
             error(EINVAL,EINVAL," Error: there is no valid connections (%d) %s /",(NewConnection->Socket.ErrCode),
                                                                                  &(NewConnection->Socket.ErrMsg[0]));
-        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    };
+    };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-    /* Main message-loop queue */
+    /* Main message-loop queue ----------------------------------------------------------------------------- */
     while( (oFlags=MainData->Flags) < OPTION_LAST )
     {
-        struct CONNECT_INFO       *Connection;
-        static struct epoll_event  ePollEvent;
-        int                        ePollHandle;
-        int                        ePollReady;
+        struct CONNECT_INFO       *Connection;                                                                //
+        static struct epoll_event  ePollEvent;                                                                //
+        int                        ePollHandle;                                                               //
+        int                        ePollReady;                                                                //
 
         switch(MainData->Status)
         {
@@ -258,8 +257,7 @@ bool SignalHandlerInit(struct sigaction *Action){
     const int  Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
 
     if(Action)
-    {
-        Action->sa_flags = (SA_RESETHAND|SA_NODEFER);
+    {   Action->sa_flags = (SA_RESETHAND|SA_NODEFER);
 
         if( (result = (bool)(sigfillset(&(Action->sa_mask))+1)) )
             for(unsigned int i=0; i<5; i++)
