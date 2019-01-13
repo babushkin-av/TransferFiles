@@ -99,6 +99,8 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
     /* Get some system info -------------------------------------------------------------------------------- */
     uname(&(MainData->SysInfo));
     if( !(MainData->SysInfo.nodename[0]) )
+        gethostname(&(MainData->SysInfo.nodename[0]),sizeof(MainData->SysInfo.nodename));
+
     if( GetLocalTime(&(MainData->Time),NULL) > 0 )  MainData->Time.Start = MainData->Time.Now;                // Initializating timer.
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -108,14 +110,12 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-    if( argc > 1 ) /* Parsing command-line ----------------------------------------------------------------- */
+    /* Parsing command-line ----------------------------------------------------------------- */
     {
-        struct CONNECT_INFO   *NewConnection = &(MainData->Network.iConnection[0]);                           //
-
         unsigned int  oID;                                                                                    // Option ID;
-        unsigned int  oMax     = GetOptionIndex(OPTION_LAST);                                                 //
-        unsigned int *oIndexes = (unsigned int*)calloc(oMax,sizeof(unsigned int));                            // Temporary buffer for the indexes.
-        unsigned int  oCurrent = 1;                                                                           // Current index;
+        unsigned int  oMax     = GetOptionIndex(OPTION_LAST);                                                 // Maximum number of Indexes;
+        unsigned int *oIndexes = (unsigned int*)calloc(oMax,sizeof(unsigned int));                            // Temporary buffer for the indexes;
+        unsigned int  oCurrent = 1;                                                                           // Current index.
 
         if( !oIndexes )  goto Exit01;
 
@@ -134,12 +134,19 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         {
             ShowVersion();
             printf(" Allocating (%u+%u) bytes...  OK \r\n\r\n Parsing options: \r\n",sizeof(struct MAIN_DATA),oMax*sizeof(unsigned int));
-            for(unsigned int i=1; i<oMax; i++)  if( oID = *(oIndexes+i) )  printf("\t % 2u:% 2u: %s \r\n",i,oID,GetOptionHelp(1<<(i-1)));
-            oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
+
+            for(unsigned int i=1; i<oMax; i++)
+                if( oID = *(oIndexes+i) )
+                    printf("     % 2u:% 2u: %s \r\n",i,oID,GetOptionHelp(1<<(i-1)));
+
         };
+            oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-        switch( oFlags & (OPTION_IPV4|OPTION_IPV6) ) /* Initializing the network structures and flags ------ */
+        /* Initializing the network structures and flags --------------------------------------------------- */
+        struct CONNECT_INFO   *NewConnection = &(MainData->Network.iConnection[0]);                           //
+
+        switch( oFlags & (OPTION_IPV4|OPTION_IPV6) )
         {
             case OPTION_IPV4:    NewConnection->AddrInfo.ai_family = AF_INET;  break;                         // - the case for a "IPv4" option;
             case OPTION_IPV6:    NewConnection->AddrInfo.ai_family = AF_INET6;  break;                        // - the case for a "IPv6" option;
@@ -170,6 +177,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         MainData->Files = oCurrent;
         free(oIndexes);
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 
         /* Configuring the network connections ------------------------------------------------------------- */
         struct addrinfo *Handle = NetworkConfigureInit((MainData->Host),(MainData->Port),NewConnection);

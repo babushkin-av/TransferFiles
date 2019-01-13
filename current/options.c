@@ -95,7 +95,8 @@ return( puts(OHelpStr) ); }
 
 int ShowVersion(void){
 
-return( printf("\r\n %s for %s %s %s version, Copyleft (c), %s, feedback@babushkin.ru.net. \r\n\r\n",APP_NAME,OPTIONS_OS_STRING,OPTIONS_DEBUG_STRING,APP_VERSION,__DATE__) ); }
+return( printf("\r\n This is %s for %s %s (%s version), \r\n Copyleft (c), %s, feedback@babushkin.ru.net. \r\n\r\n",
+    APP_NAME,OPTIONS_OS_STRING,OPTIONS_DEBUG_STRING,APP_VERSION,__DATE__) ); }
 
 /**************************************************************************************************************************
  * ========================================= *** GetOptionIndex() Function *** ========================================== *
