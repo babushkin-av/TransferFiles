@@ -41,17 +41,14 @@
 
 
 enum APP_STATUS {
-    STATUS_INITIALIZE,
+    STATUS_QUEUEINIT,
     STATUS_CONFIGURE,
-    STATUS_CLIENT_WAIT,
-    STATUS_CLIENT_CONNECT,
+    STATUS_WAIT4READY,
     STATUS_CLIENT_HANDSHAKE,
-    STATUS_CLIENT_SENDFILES,
+    STATUS_CLIENT_SENDDATA,
     STATUS_CLIENT_GOODBYE,
-    STATUS_SERVER_WAIT,
-    STATUS_SERVER_CONNECT,
     STATUS_SERVER_HANDSHAKE,
-    STATUS_SERVER_RECVFILES,
+    STATUS_SERVER_RECVDATA,
     STATUS_LAST
 };
 
@@ -193,9 +190,9 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
             NewConnection++;
             MainData->Network.nConnections++;
         };
-        if( (!Handle)&&(!MainData->Network.nConnections) )
-            error(EINVAL,EINVAL," Error: there is no valid connections (%d) %s /",(NewConnection->Socket.ErrCode),
-                                                                                 &(NewConnection->Socket.ErrMsg[0]));
+        if( !(MainData->Network.nConnections) )
+            error(EINVAL,EINVAL," No more connections. Exit program. (%d) %s /",(NewConnection->Socket.ErrCode),
+                                                                               &(NewConnection->Socket.ErrMsg[0]));
     };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Main message-loop queue ----------------------------------------------------------------------------- */
@@ -208,7 +205,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
 
         switch(MainData->Status)
         {
-            case STATUS_INITIALIZE:
+            case STATUS_QUEUEINIT:
                 if( !(oFlags & OPTION_QUIET) )  printf(" Network initialization... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;
                 if( !(oFlags & OPTION_QUIET) )  puts(" OK ");
@@ -225,14 +222,11 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
                     ePollEvent.data.ptr = Connection;
                     epoll_ctl(ePollHandle,EPOLL_CTL_ADD,(Connection->Socket.Handle),&ePollEvent);
                 };
-                if( oFlags & OPTION_SERVER )  MainData->Status = STATUS_SERVER_WAIT;  else
-                                              MainData->Status = STATUS_CLIENT_WAIT;
+                MainData->Status = STATUS_WAIT4READY;
                 break;
 
-            case STATUS_CLIENT_WAIT:
-                printf(" ...");
-
-            case STATUS_CLIENT_CONNECT:
+            case STATUS_WAIT4READY:
+                if ( !ePollReady )  {   printf(".");  fflush(stdout);   };
                 break;
 
         };

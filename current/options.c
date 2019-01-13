@@ -45,11 +45,11 @@ const char *OHelpStr =  " \r\n"
                         "     -o  --overwrite   Overwrite existing files. \r\n\r\n"
                         "     -4, --ipv4,       This is a hint as to which Protocol to use \r\n"
                         "     -6, --ipv6        when you specify a host name. \r\n\r\n"
-                        "     -T:[addr],        Work as a client sending files TO [addr] \r\n"
+                        "     -T=[addr],        Work as a client sending files TO [addr] \r\n"
                         "     --to=[addr]       (which is localhost by default). \r\n\r\n"
-                        "     -F:[addr],        Work as a server reciving files FROM [addr] \r\n"
+                        "     -F=[addr],        Work as a server reciving files FROM [addr] \r\n"
                         "     --from=[addr]     (which is INADDR_ANY by default). \r\n\r\n"
-                        "     -p:[port], \r\n"
+                        "     -p=[port], \r\n"
                         "     --port=[port]     Set up a port number (which is 45678 by default). \r\n";
 
 struct OPTIONS_DATA ODataDefault[] = {
@@ -74,11 +74,11 @@ struct OPTIONS_DATA ODataDefault[] = {
      { OPTION_IPV6,     "--ipv6",       NULL,       "Use IPv6.",                           NULL },
      { OPTION_IPV6,     "-6",           NULL,       "Use IPv6.",                           NULL },
      { OPTION_SERVER,   "--from",       "=[addr]",  "Work as a server.",                   NULL },
-     { OPTION_SERVER,   "-F",           ":[addr]",  "Work as a server.",                   NULL },
+     { OPTION_SERVER,   "-F",           "=[addr]",  "Work as a server.",                   NULL },
      { OPTION_CLIENT,   "--to",         "=[addr]",  "Work as a client.",                   NULL },
-     { OPTION_CLIENT,   "-T",           ":[addr]",  "Work as a client.",                   NULL },
+     { OPTION_CLIENT,   "-T",           "=[addr]",  "Work as a client.",                   NULL },
      { OPTION_PORT,     "--port",       "=[port]",  "Set up a port number.",               NULL },
-     { OPTION_PORT,     "-p",           ":[port]",  "Set up a port number.",               NULL },
+     { OPTION_PORT,     "-p",           "=[port]",  "Set up a port number.",               NULL },
      { OPTION_LAST, NULL, NULL, NULL } };
 
 /**************************************************************************************************************************
@@ -120,19 +120,16 @@ unsigned int GetOptionID(char *argv){
     if(argv)
         for(struct OPTIONS_DATA *DataBase = &ODataDefault[0]; (result = (DataBase->ID)) < OPTION_LAST; DataBase++)
         {
-            char  *ParamSeparator;
-            char  *CurrentOption = (char*)(DataBase->Option);
-            char  *CurrentParam  = (char*)(DataBase->OptionExt);
-            size_t strLength     = _POSIX_PATH_MAX;
+            size_t strLength = _POSIX_PATH_MAX;
+            char  *CurrentOption, *CurrentParam;
 
-            if(!CurrentOption) break;
-
-            if(CurrentParam)
+            if( !( CurrentOption = (char*)(DataBase->Option) ) ) break;
+            if( CurrentParam = (char*)(DataBase->OptionExt) )
             {
-                strLength      = strlen(CurrentOption);
-                ParamSeparator = (argv + strLength);
+                      strLength = strlen(CurrentOption);
+                char *Separator = (argv + strLength);
 
-                if(!strncmp(CurrentParam,ParamSeparator,1))  DataBase->Var = (ParamSeparator+1);
+                if( *Separator == *CurrentParam )  SetOptionVar(result,(Separator+1));
             };
             if(!strncmp(argv,CurrentOption,strLength))  return(result);
         };
@@ -167,6 +164,22 @@ char* GetOptionVar(unsigned int ID){
         DataBase++;
     };
 return(DataBase->Var); }
+
+/**************************************************************************************************************************
+ * =========================================== *** SetOptionVar() Function *** ========================================== *
+ **************************************************************************************************************************/
+
+size_t SetOptionVar(unsigned int ID, char *Var){
+
+    struct OPTIONS_DATA *DataBase = &ODataDefault[0];
+    size_t               result   = 0;
+
+    while(DataBase->Option)
+    {
+        if( (DataBase->ID) == ID)  {   DataBase->Var = Var;  result++;   };
+        DataBase++;
+    };
+return(result); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
