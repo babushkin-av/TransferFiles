@@ -97,17 +97,22 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Get some system info -------------------------------------------------------------------------------- */
-    uname(&(MainData->SysInfo));
-    if( !(MainData->SysInfo.nodename[0]) )
-        gethostname(&(MainData->SysInfo.nodename[0]),sizeof(MainData->SysInfo.nodename));
+    {
+        uname(&(MainData->SysInfo));
 
-    if( GetLocalTime(&(MainData->Time),NULL) > 0 )  MainData->Time.Start = MainData->Time.Now;                // Initializating timer.
+        char *ThisHost = &(MainData->SysInfo.nodename[0]);
+        if( !ThisHost )  gethostname(ThisHost,sizeof(MainData->SysInfo.nodename));
+
+        if( GetLocalTime(&(MainData->Time),NULL) > 0 )  MainData->Time.Start = MainData->Time.Now;            // Initializating timer.
+    };
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Initializating signal handler ----------------------------------------------------------------------- */
-    MainData->Signals.sa_handler = (SignalHandler);
-    if( !(SignalHandlerInit(&(MainData->Signals))) )
-        error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
+    {
+        MainData->Signals.sa_handler = (SignalHandler);
+        if( !(SignalHandlerInit(&(MainData->Signals))) )
+            error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
+    };
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Parsing command-line ----------------------------------------------------------------- */
@@ -139,12 +144,12 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
                 if( oID = *(oIndexes+i) )
                     printf("     % 2u:% 2u: %s \r\n",i,oID,GetOptionHelp(1<<(i-1)));
 
-        };
             oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
+        };
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
         /* Initializing the network structures and flags --------------------------------------------------- */
-        struct CONNECT_INFO   *NewConnection = &(MainData->Network.iConnection[0]);                           //
+        struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[0]);                             //
 
         switch( oFlags & (OPTION_IPV4|OPTION_IPV6) )
         {
@@ -204,7 +209,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
             };
             Handle = Handle->ai_next;
 
-            if( !(oFlags & OPTION_QUIET) )  printf("- (%d/%d) %s \r\n",Socket,errno,strerror(errno));
+            if( !(oFlags & OPTION_QUIET) )  printf("- (%d) %s.\r\n",errno,strerror(errno));
             if( errno )  {   close(Socket);  continue;   };
 
             NewConnection->Socket.Handle = Socket;
@@ -220,7 +225,6 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
     /* Main message-loop queue ----------------------------------------------------------------------------- */
     while( (oFlags=MainData->Flags) < OPTION_LAST )
     {
-        struct CONNECT_INFO       *Connection;                                                                //
         static struct epoll_event  ePollEvent;                                                                //
         int                        ePollHandle;                                                               //
         int                        ePollReady;                                                                //
@@ -238,7 +242,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
             case STATUS_CONFIGURE:
                 for(size_t i=0, iMax=(MainData->Network.nConnections); i<iMax; i++)
                 {
-                    Connection = &(MainData->Network.iConnection[i]);
+                    struct CONNECT_INFO *Connection = &(MainData->Network.iConnection[i]);
 
                     ePollEvent.events   = EPOLLIN|EPOLLOUT;
                     ePollEvent.data.ptr = Connection;
