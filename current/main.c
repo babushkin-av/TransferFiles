@@ -44,12 +44,12 @@
 enum APP_STATUS {
     STATUS_QUEUEINIT,
     STATUS_CONFIGURE,
-    STATUS_WAIT4READY,
-    STATUS_CLIENT_HANDSHAKE,
-    STATUS_CLIENT_SENDDATA,
-    STATUS_CLIENT_GOODBYE,
-    STATUS_SERVER_HANDSHAKE,
+    STATUS_SERVER_WAIT,
+    STATUS_CLIENT_WAIT,
     STATUS_SERVER_RECVDATA,
+    STATUS_CLIENT_SENDDATA,
+    STATUS_SERVER_GOODBYE,
+    STATUS_CLIENT_GOODBYE,
     STATUS_LAST
 };
 
@@ -248,11 +248,29 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
                     ePollEvent.data.ptr = Connection;
                     epoll_ctl(ePollHandle,EPOLL_CTL_ADD,(Connection->Socket.Handle),&ePollEvent);
                 };
-                MainData->Status = STATUS_WAIT4READY;
+                if( oFlags & OPTION_SERVER )  MainData->Status = STATUS_SERVER_WAIT;  else
+                                              MainData->Status = STATUS_CLIENT_WAIT;
                 break;
 
-            case STATUS_WAIT4READY:
-                if ( !ePollReady )  {   printf(".");  fflush(stdout);   };
+            case STATUS_SERVER_WAIT:
+                if ( ePollReady )
+                {
+                    struct CONNECT_INFO *Listener      = (struct CONNECT_INFO*)ePollEvent.data.ptr;
+                    struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[ (MainData->Network.nConnections) ]);
+
+                    if( (ePollEvent.events) & (EPOLLIN|EPOLLOUT) )
+                        NewConnection->Socket.Handle = accept((Listener->Socket.Handle),(NewConnection->AddrInfo.ai_addr),&(NewConnection->AddrInfo.ai_addrlen));
+                    if( NewConnection->Socket.Handle >= 0 )
+                    {
+                        NetworkConfigureNext(&(NewConnection->AddrInfo),NewConnection);
+                        printf("     Connecting to: [ %s @%s ] ",&(NewConnection->HostInfo.HostName[0]),
+                                                                 &(NewConnection->HostInfo.PortName[0]));
+                        fflush(stdout);
+                    };
+                };
+                break;
+
+            case STATUS_CLIENT_WAIT:
                 break;
 
         };

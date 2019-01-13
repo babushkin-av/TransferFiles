@@ -67,7 +67,8 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
         strcpy(&(WorkingHost->HostName[0]),&(WorkingHost->HostNum[0]));
         strcpy(&(WorkingHost->PortName[0]),&(WorkingHost->PortNum[0]));
     };
-    memcpy(&(iConn->AddrInfo),Handle,sizeof(struct addrinfo));
+    if( (void*)(Handle) != (void*)&(iConn->AddrInfo) )  // Bug fix!
+        memcpy(&(iConn->AddrInfo),Handle,sizeof(struct addrinfo));
     memcpy(&(iConn->AddrSpace.Raw),(Handle->ai_addr),(Handle->ai_addrlen));
     iConn->AddrInfo.ai_addr = &(iConn->AddrSpace.Raw);
     iConn->AddrInfo.ai_next = NULL;
