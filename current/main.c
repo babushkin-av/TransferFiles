@@ -34,6 +34,7 @@
 #include <error.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 
 /**************************************************************************************************************************
  * ============================================== *** Global variables *** ============================================== *
@@ -60,8 +61,9 @@ struct MAIN_DATA {
     char                    *Port;                             //
     enum   APP_STATUS        Status;                           // Status of the message-loop;
     struct APP_CLOCK         Time;                             // Current time;
-    struct sigaction         Signals;
-    struct NETWORK_DATA      Network;
+    struct sigaction         Signals;                          //
+    struct utsname           SysInfo;                          // System information;
+    struct NETWORK_DATA      Network;                          //
 } *MainData;
 
 /**************************************************************************************************************************
@@ -89,32 +91,43 @@ int main(int argc, char *argv[], char *env[]){
     oFlags = oFlags|OPTION_DEBUG;
 #endif
 
-    /* Memory allocation */
+    /* Memory allocation ----------------------------------------------------------------------------------- */
     if( !( MainData = (struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA)) ) )
 Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-    /* Initializating signal handler */
+    /* Get some system info -------------------------------------------------------------------------------- */
+    uname(&(MainData->SysInfo));
+    if( !(MainData->SysInfo.nodename[0]) )
+    if( GetLocalTime(&(MainData->Time),NULL) > 0 )  MainData->Time.Start = MainData->Time.Now;                // Initializating timer.
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+    /* Initializating signal handler ----------------------------------------------------------------------- */
     MainData->Signals.sa_handler = (SignalHandler);
     if( !(SignalHandlerInit(&(MainData->Signals))) )
         error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     if( argc > 1 ) /* Parsing command-line ----------------------------------------------------------------- */
     {
         struct CONNECT_INFO   *NewConnection = &(MainData->Network.iConnection[0]);                           //
 
-        unsigned int  oMax;                                                                                   //
         unsigned int  oID;                                                                                    // Option ID;
-        unsigned int  oCurrent;                                                                               // Current index;
-        unsigned int *oIndexes;                                                                               // Temporary buffer for the indexes.
+        unsigned int  oMax     = GetOptionIndex(OPTION_LAST);                                                 //
+        unsigned int *oIndexes = (unsigned int*)calloc(oMax,sizeof(unsigned int));                            // Temporary buffer for the indexes.
+        unsigned int  oCurrent = 1;                                                                           // Current index;
 
-        if( !( oIndexes = (unsigned int*)calloc(oMax=GetOptionIndex(OPTION_LAST),sizeof(unsigned int)) ) )  goto Exit01;
-                                                                                                              // Initializing indexes.
-        for(oCurrent=1; oID=GetOptionID(argv[oCurrent]); oCurrent++)
-            switch(oID)                                                                                       // Recognizing a string:
-            {   case OPTION_HELP:      ShowHelp();  exit(EXIT_SUCCESS);  break;                               // - the case for a "help" option;
-                case OPTION_VERSION:   ShowVersion();  exit(EXIT_SUCCESS);  break;                            // - the case for a "version" option;
-                default:    oFlags = oFlags|oID;  *(oIndexes + GetOptionIndex(oID)) = oCurrent;  break;       // - the case for a default scenario.
-            };
+        if( !oIndexes )  goto Exit01;
+
+        while( oID = GetOptionID(argv[oCurrent]) )                                                            // Recognizing a string:
+        {
+            if( oID == OPTION_HELP )  {   ShowHelp();  exit(EXIT_SUCCESS);   };                               // - the case for a "help" option;
+            if( oID == OPTION_VERSION )  {   ShowVersion();  exit(EXIT_SUCCESS);   };                         // - the case for a "version" option;
+                                                                                                              // - the case for a default scenario:
+            oFlags = oFlags|oID;                                                                              //
+            *(oIndexes + GetOptionIndex(oID)) = oCurrent;                                                     //
+            oCurrent++;                                                                                       //
+        };
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
         if( oFlags & OPTION_DEBUG ) /* Show some debug info ------------------------------------------------ */
@@ -189,6 +202,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
             NewConnection->Socket.Handle = Socket;
             NewConnection++;
             MainData->Network.nConnections++;
+            if( oFlags & OPTION_CLIENT )  break;
         };
         if( !(MainData->Network.nConnections) )
             error(EINVAL,EINVAL," No more connections. Exit program. (%d) %s /",(NewConnection->Socket.ErrCode),
@@ -206,10 +220,10 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         switch(MainData->Status)
         {
             case STATUS_QUEUEINIT:
-                if( !(oFlags & OPTION_QUIET) )  printf(" Network initialization... ");
+                if( oFlags & OPTION_DEBUG )  printf(" Network initialization... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;
-                if( !(oFlags & OPTION_QUIET) )  puts(" OK ");
-                GetLocalTime(&(MainData->Time),NULL);       // Initializating timer
+                if( oFlags & OPTION_DEBUG )  puts(" OK ");
+
                 MainData->Status = STATUS_CONFIGURE;
                 break;
 
