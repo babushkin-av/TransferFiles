@@ -44,15 +44,8 @@
 enum APP_STATUS {
     STATUS_QUEUEINIT,
     STATUS_CONFIGURE,
-    STATUS_SERVER_WAIT,
-    STATUS_CLIENT_WAIT,
-    STATUS_SERVER_RECVDATA,
-    STATUS_CLIENT_SENDDATA,
-    STATUS_SERVER_GOODBYE,
-    STATUS_CLIENT_GOODBYE,
     STATUS_LAST
 };
-
 
 struct MAIN_DATA {
     unsigned int             Flags;                            // The Application flags;
@@ -98,12 +91,11 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
 
     /* Get some system info -------------------------------------------------------------------------------- */
     {
+        GetTimeStart(&(MainData->Time),NULL);                                                                  // Initializating timer.
         uname(&(MainData->SysInfo));
 
         char *ThisHost = &(MainData->SysInfo.nodename[0]);
         if( !ThisHost )  gethostname(ThisHost,sizeof(MainData->SysInfo.nodename));
-
-        if( GetLocalTime(&(MainData->Time),NULL) > 0 )  MainData->Time.Start = MainData->Time.Now;            // Initializating timer.
     };
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -138,8 +130,12 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         if( oFlags & OPTION_DEBUG ) /* Show some debug info ------------------------------------------------ */
         {
             ShowVersion();
-            printf(" Allocating (%u+%u) bytes...  OK \r\n\r\n Parsing options: \r\n",sizeof(struct MAIN_DATA),oMax*sizeof(unsigned int));
+            printf(" Program startup: %s; \r\n",&(MainData->Time.String[0]));
+            printf(" On %s host: %s \r\n",&(MainData->SysInfo.sysname[0]),
+                                          &(MainData->SysInfo.nodename[0]));
+            printf(" Allocating: %u+%u bytes. \r\n\r\n",sizeof(struct MAIN_DATA),oMax*sizeof(unsigned int));
 
+            puts(" Parsing options: ");
             for(unsigned int i=1; i<oMax; i++)
                 if( oID = *(oIndexes+i) )
                     printf("     % 2u:% 2u: %s \r\n",i,oID,GetOptionHelp(1<<(i-1)));
@@ -196,8 +192,8 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
                 char *ConfStr;
                 if( oFlags & OPTION_CLIENT )  ConfStr = "Connecting to";  else
                                               ConfStr = "Configuring connection";
-                printf("     %s: [ %s @%s ] ",ConfStr,&(NewConnection->HostInfo.HostName[0]),
-                                                      &(NewConnection->HostInfo.PortName[0]));
+                printf("     %s: [ %s @%s ] ",ConfStr,&(NewConnection->HostInfo.HostNum[0]),
+                                                      &(NewConnection->HostInfo.PortNum[0]));
                 fflush(stdout);
             };
             int Socket = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol));
@@ -248,12 +244,24 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
                     ePollEvent.data.ptr = Connection;
                     epoll_ctl(ePollHandle,EPOLL_CTL_ADD,(Connection->Socket.Handle),&ePollEvent);
                 };
-                if( oFlags & OPTION_SERVER )  MainData->Status = STATUS_SERVER_WAIT;  else
-                                              MainData->Status = STATUS_CLIENT_WAIT;
+                MainData->Status++;
                 break;
 
-            case STATUS_SERVER_WAIT:
-                if ( ePollReady )
+            default:
+                if ( !ePollReady )
+                {
+                    if( GetTimeDiff(&(MainData->Time),NULL) > 0 )
+                        if( !(oFlags & OPTION_QUIET) )
+                        {
+                            char *ConfStr;
+                            if( oFlags & OPTION_CLIENT )  ConfStr = "data";  else
+                                                          ConfStr = "connection";
+                            printf(" Waiting for %s: %s ...  \r",ConfStr,&(MainData->Time.String[0]));
+                            fflush(stdout);
+                        };
+                    break;
+                };
+
                 {
                     struct CONNECT_INFO *Listener      = (struct CONNECT_INFO*)ePollEvent.data.ptr;
                     struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[ (MainData->Network.nConnections) ]);
@@ -266,14 +274,9 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
 //                            if( !(oFlags & OPTION_QUIET) )  {   printf("     Connecting to: [ %s ] ... OK ",&(NewConnection->HostInfo.HostName[0]));  fflush(stdout);   };
 //                    };
                 };
-                break;
-
-            case STATUS_CLIENT_WAIT:
-                break;
-
         };
         if( (ePollReady = epoll_wait(ePollHandle,&ePollEvent,1,1000)) < 0 )  break;
-    };
+    };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     error(EXIT_SUCCESS,errno," Exit program (%d)",errno);
 
