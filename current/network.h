@@ -44,19 +44,24 @@
 #define NETWORK_DATA_BUF       (4096)
 #define NETWORK_PORT_NUM       (40678 + IPPORT_USERRESERVED)
 
-union SOCKET_ADDR {
-    struct sockaddr_in         IPv4;
-    struct sockaddr_in6        IPv6;
-    struct sockaddr            Raw;
+enum CONN_STAT {
+    CONNECTION_LISTENER,
+    CONNECTION_ACTIVE
 };
 
 struct SOCKET_INFO {
     int                        Handle;
+    int                        Flags;
+    int                        Status;
     time_t                     Start;
-    size_t                     BytesSend;
-    size_t                     BytesRecv;
     int                        ErrCode;
     char                       ErrMsg[APP_NAME_MAX];
+};
+
+union SOCKET_ADDR {
+    struct sockaddr_in         IPv4;
+    struct sockaddr_in6        IPv6;
+    struct sockaddr            Raw;
 };
 
 struct HOST_INFO {
@@ -67,11 +72,21 @@ struct HOST_INFO {
     char                       Protocol[NI_MAXSERV];
 };
 
+struct DATA_BUFF {
+    size_t                     nBytes;
+    size_t                     BytesSend;
+    size_t                     BytesRecv;
+    void                      *FileInfo;
+    uint8_t                    Buffer[NETWORK_DATA_BUF];
+};
+
 struct CONNECT_INFO {
+    enum   CONN_STAT           Status;
     struct SOCKET_INFO         Socket;
     union  SOCKET_ADDR         AddrSpace;
     struct addrinfo            AddrInfo;
     struct HOST_INFO           HostInfo;
+    struct DATA_BUFF           Stream;
 };
 
 struct NETWORK_DATA {

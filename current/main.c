@@ -258,15 +258,13 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
                     struct CONNECT_INFO *Listener      = (struct CONNECT_INFO*)ePollEvent.data.ptr;
                     struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[ (MainData->Network.nConnections) ]);
 
-                    if( (ePollEvent.events) & (EPOLLIN|EPOLLOUT) )
-                        NewConnection->Socket.Handle = accept((Listener->Socket.Handle),(NewConnection->AddrInfo.ai_addr),&(NewConnection->AddrInfo.ai_addrlen));
-                    if( NewConnection->Socket.Handle >= 0 )
-                    {
-                        NetworkConfigureNext(&(NewConnection->AddrInfo),NewConnection);
-                        printf("     Connecting to: [ %s @%s ] ",&(NewConnection->HostInfo.HostName[0]),
-                                                                 &(NewConnection->HostInfo.PortName[0]));
-                        fflush(stdout);
-                    };
+//                    if( (ePollEvent.events) & (EPOLLIN|EPOLLOUT) )
+//                        if( ( NewConnection->Socket.Handle = accept((Listener->Socket.Handle),(NewConnection->AddrInfo.ai_addr),&(NewConnection->AddrInfo.ai_addrlen)) ) < 0 )
+//                    if( NewConnection->Socket.Handle >= 0 )
+//                    {
+//                        if( NetworkConfigureNext(&(NewConnection->AddrInfo),NewConnection) )
+//                            if( !(oFlags & OPTION_QUIET) )  {   printf("     Connecting to: [ %s ] ... OK ",&(NewConnection->HostInfo.HostName[0]));  fflush(stdout);   };
+//                    };
                 };
                 break;
 
