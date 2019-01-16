@@ -27,6 +27,8 @@
 
 #include "base.h"
 
+#include <fcntl.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
@@ -34,7 +36,6 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <unistd.h>
 
 /**************************************************************************************************************************
  * ============================================== *** Global Variables *** ============================================== *

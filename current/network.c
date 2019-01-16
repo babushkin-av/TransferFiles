@@ -36,15 +36,16 @@
 
 struct addrinfo* NetworkConfigureInit(char *Host, char *Port, struct CONNECT_INFO *iConn){
 
-    static struct addrinfo *resTmp;
-    int gaiResult;
+    static struct addrinfo *resTmp = NULL;
 
-    if( gaiResult = getaddrinfo(Host,Port,&(iConn->AddrInfo),&resTmp) )
-    {
-        strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(gaiResult),APP_NAME_MAX);
-        iConn->Socket.ErrCode = gaiResult;
-        resTmp = NULL;
-    };
+    if( iConn )
+    {   int gaiResult = getaddrinfo(Host,Port,&(iConn->AddrInfo),&resTmp);
+        if( gaiResult )
+        {
+            strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(gaiResult),APP_NAME_MAX);
+            iConn->Socket.ErrCode = gaiResult;
+            resTmp = NULL;
+    };  };
 return(resTmp); }
 
 /**************************************************************************************************************************
@@ -92,14 +93,15 @@ bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
             {   case 0:   if( !connect(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  Result = true;  break;
                 default:  if( !bind(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  if( !listen(hSock,0) )  Result = true;
             };
+        iConn->Socket.ErrCode = errno;
+        strncpy(&(iConn->Socket.ErrMsg[0]),strerror(errno),APP_NAME_MAX);
+
         switch(Result)
-        {   case false:
-                iConn->Socket.ErrCode = errno;
-                strncpy(&(iConn->Socket.ErrMsg[0]),strerror(errno),APP_NAME_MAX);
-                close(hSock);  hSock = -1;  break;
-            default:
-                iConn->Socket.Handle = hSock;
+        {   case false:  close(hSock);  hSock = -1;  break;
+            case true:   iConn->Socket.Flags  = fcntl(hSock,F_GETFD);
+                         iConn->Socket.Status = fcntl(hSock,F_GETFL);
         };
+        iConn->Socket.Handle = hSock;
     };
 return(Result); }
 

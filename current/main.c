@@ -180,42 +180,35 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
         /* Configuring the network connections ------------------------------------------------------------- */
-        struct addrinfo *Handle = NetworkConfigureInit((MainData->Host),(MainData->Port),NewConnection);
-        while( Handle )
+        struct addrinfo *pHandle = NetworkConfigureInit((MainData->Host),(MainData->Port),NewConnection);
+
+        for(struct addrinfo *Handle = pHandle; Handle; Handle = Handle->ai_next)
         {
-            errno = 0;
+                 errno   = 0;
+            bool fServer = (oFlags & OPTION_SERVER);
 
-            if( !( NetworkConfigureNext(Handle,NewConnection) ) )  break;
             if( !(oFlags & OPTION_QUIET) )
+                switch(fServer)
+                {   case false:  printf("      Configuring connection: ");  break;
+                    default:     printf("      Connecting to: ");  break;
+                };
+            if( NetworkConfigureNext(Handle,NewConnection) )
             {
-                char *ConfStr;
-                if( oFlags & OPTION_CLIENT )  ConfStr = "Connecting to";  else
-                                              ConfStr = "Configuring connection";
-                printf("     %s: [ %s @%s ] ",ConfStr,&(NewConnection->HostInfo.HostNum[0]),
-                                                      &(NewConnection->HostInfo.PortNum[0]));
-                fflush(stdout);
+                printf(" [ %s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),&(NewConnection->HostInfo.PortNum[0]));  fflush(stdout);
+                if( NetworkConfigureSocket(NewConnection,fServer) )  {   MainData->Network.nConnections++;  NewConnection++;   };
             };
-            int Socket = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol));
-            if( Socket >= 0 )
-            {
-                if( oFlags & OPTION_CLIENT )
-                    connect(Socket,(Handle->ai_addr),(Handle->ai_addrlen));  else
-                    if( !( bind(Socket,(Handle->ai_addr),(Handle->ai_addrlen)) ) )  listen(Socket,0);
-            };
-            Handle = Handle->ai_next;
-
-            if( !(oFlags & OPTION_QUIET) )  printf("- (%d) %s.\r\n",errno,strerror(errno));
-            if( errno )  {   close(Socket);  continue;   };
-
-            NewConnection->Socket.Handle = Socket;
-            NewConnection++;
-            MainData->Network.nConnections++;
-            if( oFlags & OPTION_CLIENT )  break;
+            if( !(oFlags & OPTION_QUIET) )
+                printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),&(NewConnection->Socket.ErrMsg[0]));
+            if( !fServer )  break;
         };
-        if( !(MainData->Network.nConnections) )
-Exit02:     error(EINVAL,EINVAL," No more connections. Exit program. (%d) %s /",(NewConnection->Socket.ErrCode),
-                                                                               &(NewConnection->Socket.ErrMsg[0]));
+        if( pHandle )  freeaddrinfo(pHandle);
     };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+    if( !(MainData->Network.nConnections) )
+    {
+Exit02: puts(" There is no more connections left... ");
+        MainData->Flags |= OPTION_LAST;
+    };
 
     /* Main message-loop queue ----------------------------------------------------------------------------- */
     while( (oFlags=MainData->Flags) < OPTION_LAST )
@@ -263,7 +256,7 @@ Exit02:     error(EINVAL,EINVAL," No more connections. Exit program. (%d) %s /",
                     };
                     if( !( MainData->Network.nConnections = nSuccess ) )  goto Exit02;
                 };
-                if( oFlags & OPTION_DEBUG )  puts(" OK \r\n");
+                if( oFlags & OPTION_DEBUG )  puts(" ... OK \r\n");
                 MainData->Status++;
                 break;
 
