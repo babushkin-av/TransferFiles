@@ -110,9 +110,9 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
     /* Parsing command-line ----------------------------------------------------------------- */
     {
         unsigned int  oID;                                                                                    // Option ID;
+        unsigned int  oCurrent = 1;                                                                           // Current index.
         unsigned int  oMax     = GetOptionIndex(OPTION_LAST);                                                 // Maximum number of Indexes;
         unsigned int *oIndexes = (unsigned int*)calloc(oMax,sizeof(unsigned int));                            // Temporary buffer for the indexes;
-        unsigned int  oCurrent = 1;                                                                           // Current index.
 
         if( !oIndexes )  goto Exit01;
 
@@ -179,7 +179,6 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         free(oIndexes);
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-
         /* Configuring the network connections ------------------------------------------------------------- */
         struct addrinfo *Handle = NetworkConfigureInit((MainData->Host),(MainData->Port),NewConnection);
         while( Handle )
@@ -214,7 +213,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
             if( oFlags & OPTION_CLIENT )  break;
         };
         if( !(MainData->Network.nConnections) )
-            error(EINVAL,EINVAL," No more connections. Exit program. (%d) %s /",(NewConnection->Socket.ErrCode),
+Exit02:     error(EINVAL,EINVAL," No more connections. Exit program. (%d) %s /",(NewConnection->Socket.ErrCode),
                                                                                &(NewConnection->Socket.ErrMsg[0]));
     };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -228,7 +227,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         switch(MainData->Status)
         {
             case STATUS_QUEUEINIT:
-                if( oFlags & OPTION_DEBUG )  printf(" Network initialization... ");
+                if( oFlags & OPTION_DEBUG )  printf(" Message queue initialization... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;
                 if( oFlags & OPTION_DEBUG )  puts(" OK ");
 
@@ -236,14 +235,35 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
                 break;
 
             case STATUS_CONFIGURE:
-                for(size_t i=0, iMax=(MainData->Network.nConnections); i<iMax; i++)
+                if( oFlags & OPTION_DEBUG )  printf(" Registering sockets: ");
                 {
-                    struct CONNECT_INFO *Connection = &(MainData->Network.iConnection[i]);
+                    size_t nSuccess = 0;
+                    size_t iConn    = 0;
+                    size_t iConnMax = (MainData->Network.nConnections);
 
-                    ePollEvent.events   = EPOLLIN|EPOLLOUT;
-                    ePollEvent.data.ptr = Connection;
-                    epoll_ctl(ePollHandle,EPOLL_CTL_ADD,(Connection->Socket.Handle),&ePollEvent);
+                    while( iConn < iConnMax )
+                    {
+                        struct CONNECT_INFO *Connection = &(MainData->Network.iConnection[iConn]);
+
+                        ePollEvent.events   = EPOLLIN|EPOLLOUT;
+                        ePollEvent.data.ptr = Connection;
+                        switch( epoll_ctl(ePollHandle,EPOLL_CTL_ADD,(Connection->Socket.Handle),&ePollEvent) )
+                        {
+                            case 0:
+                                if( oFlags & OPTION_DEBUG )
+                                    printf(" %d.[%d],",iConn,(Connection->Socket.Handle));
+                                nSuccess++;  break;
+                            default:
+                                if( oFlags & OPTION_DEBUG )
+                                    printf(" %d:(%d) - %s, ",iConn,errno,strerror(errno));
+                                close(Connection->Socket.Handle);
+                                Connection->Socket.Handle = -1;
+                        };
+                        iConn++;
+                    };
+                    if( !( MainData->Network.nConnections = nSuccess ) )  goto Exit02;
                 };
+                if( oFlags & OPTION_DEBUG )  puts(" OK \r\n");
                 MainData->Status++;
                 break;
 

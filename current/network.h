@@ -1,6 +1,6 @@
 /**************************************************************************************************************************
  *                                                                                                                        *
- *     File: network.h (version 0.8).                                                                                     *
+ *     File: network.h (version 0.9).                                                                                     *
  *     Type: basic definitions (network.h).                                                                               *
  *     Distribution: source/object code.                                                                                  *
        License: GNU Lesser Public License version 2.1.                                                                    *
@@ -9,7 +9,7 @@
  *                                                                                                                        *
  **************************************************************************************************************************
  *                                                                                                                        *
- *     Copyleft, 2017-2018, <feedback@babushkin.ru.net>, Alexander Babushkin.                                             *
+ *     Copyleft, 2017-2019, <feedback@babushkin.ru.net>, Alexander Babushkin.                                             *
  *                                                                                                                        *
  *     This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser Public   *
  * License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later *
@@ -108,6 +108,10 @@ struct addrinfo* NetworkConfigureInit(char *Host, char *Port, struct CONNECT_INF
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn);
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 #ifdef __cplusplus

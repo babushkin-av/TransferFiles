@@ -1,6 +1,6 @@
 /**************************************************************************************************************************
  *                                                                                                                        *
- *     File: network.c (version 0.8).                                                                                     *
+ *     File: network.c (version 0.9).                                                                                     *
  *     Type:                                                                                                              *
  *     Distribution: source/object code.                                                                                  *
  *     License: GNU Lesser Public License version 2.1.                                                                    *
@@ -9,7 +9,7 @@
  *                                                                                                                        *
  **************************************************************************************************************************
  *                                                                                                                        *
- *     Copyleft, 2017-2018, <feedback@babushkin.ru.net>, Alexander Babushkin.                                             *
+ *     Copyleft, 2017-2019, <feedback@babushkin.ru.net>, Alexander Babushkin.                                             *
  *                                                                                                                        *
  *     This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser Public   *
  * License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later *
@@ -31,7 +31,7 @@
 
 
 /**************************************************************************************************************************
- * ========================================= *** NetworkConfigure() Function *** ======================================== *
+ * ======================================= *** NetworkConfigureInit() Function *** ====================================== *
  **************************************************************************************************************************/
 
 struct addrinfo* NetworkConfigureInit(char *Host, char *Port, struct CONNECT_INFO *iConn){
@@ -48,7 +48,7 @@ struct addrinfo* NetworkConfigureInit(char *Host, char *Port, struct CONNECT_INF
 return(resTmp); }
 
 /**************************************************************************************************************************
- * ========================================== *** NetworkCreate() Function *** ========================================== *
+ * ====================================== *** NetworkConfigureNext() Function *** ======================================= *
  **************************************************************************************************************************/
 
 bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
@@ -62,7 +62,7 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
         iConn->Socket.ErrCode = gaiResult;
         return(false);
     };
-    if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(WorkingHost->HostName[0]),APP_NAME_MAX,&(WorkingHost->PortName[0]),NI_MAXSERV,NI_NAMEREQD|NI_NUMERICSERV) )
+    if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(WorkingHost->HostName[0]),APP_NAME_MAX,&(WorkingHost->PortName[0]),NI_MAXSERV,NI_NAMEREQD) )
     {
         strcpy(&(WorkingHost->HostName[0]),&(WorkingHost->HostNum[0]));
         strcpy(&(WorkingHost->PortName[0]),&(WorkingHost->PortNum[0]));
@@ -74,6 +74,34 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
     iConn->AddrInfo.ai_next = NULL;
 
 return(true); }
+
+/**************************************************************************************************************************
+ * ====================================== *** NetworkConfigureNext() Function *** ======================================= *
+ **************************************************************************************************************************/
+
+bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
+
+    bool Result = false;
+
+    if( iConn )
+    {   struct addrinfo *Handle = &(iConn->AddrInfo);
+        int hSock = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol));
+
+        if( hSock >= 0 )
+            switch(fServer)
+            {   case 0:   if( !connect(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  Result = true;  break;
+                default:  if( !bind(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  if( !listen(hSock,0) )  Result = true;
+            };
+        switch(Result)
+        {   case false:
+                iConn->Socket.ErrCode = errno;
+                strncpy(&(iConn->Socket.ErrMsg[0]),strerror(errno),APP_NAME_MAX);
+                close(hSock);  hSock = -1;  break;
+            default:
+                iConn->Socket.Handle = hSock;
+        };
+    };
+return(Result); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
