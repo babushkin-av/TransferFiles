@@ -41,11 +41,8 @@ struct addrinfo* NetworkConfigureInit(char *Host, char *Port, struct CONNECT_INF
     if( iConn )
     {   int gaiResult = getaddrinfo(Host,Port,&(iConn->AddrInfo),&resTmp);
         if( gaiResult )
-        {
-            strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(gaiResult),APP_NAME_MAX);
-            iConn->Socket.ErrCode = gaiResult;
-            resTmp = NULL;
-    };  };
+        {  strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);  resTmp = NULL;  };
+    };
 return(resTmp); }
 
 /**************************************************************************************************************************
@@ -58,11 +55,8 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
     struct HOST_INFO *WorkingHost = &(iConn->HostInfo);
 
     if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(WorkingHost->HostNum[0]),APP_NAME_MAX,&(WorkingHost->PortNum[0]),NI_MAXSERV,NI_NUMERICHOST|NI_NUMERICSERV) )
-    {
-        strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(gaiResult),APP_NAME_MAX);
-        iConn->Socket.ErrCode = gaiResult;
-        return(false);
-    };
+    {   strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);  return(false);   };
+
     if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(WorkingHost->HostName[0]),APP_NAME_MAX,&(WorkingHost->PortName[0]),NI_MAXSERV,NI_NAMEREQD) )
     {
         strcpy(&(WorkingHost->HostName[0]),&(WorkingHost->HostNum[0]));
@@ -86,15 +80,14 @@ bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
 
     if( iConn )
     {   struct addrinfo *Handle = &(iConn->AddrInfo);
-        int hSock = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol));
 
+        int hSock = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol));
         if( hSock >= 0 )
             switch(fServer)
             {   case 0:   if( !connect(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  Result = true;  break;
                 default:  if( !bind(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  if( !listen(hSock,0) )  Result = true;
             };
-        iConn->Socket.ErrCode = errno;
-        strncpy(&(iConn->Socket.ErrMsg[0]),strerror(errno),APP_NAME_MAX);
+            strerror_r((iConn->Socket.ErrCode=errno),&(iConn->Socket.ErrMsg[0]),APP_NAME_MAX);
 
         switch(Result)
         {   case false:  close(hSock);  hSock = -1;  break;

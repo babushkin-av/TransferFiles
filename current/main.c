@@ -177,38 +177,43 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         MainData->Flags = oFlags;
         MainData->Files = oCurrent;
         free(oIndexes);
-        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-        /* Configuring the network connections ------------------------------------------------------------- */
-        struct addrinfo *pHandle = NetworkConfigureInit((MainData->Host),(MainData->Port),NewConnection);
+    /* Configuring the network connections ----------------------------------------------------------------- */
+    {
+        size_t    numConnections = 0;
+        struct addrinfo *pHandle = NetworkConfigureInit((MainData->Host),(MainData->Port),&(MainData->Network.iConnection[0]));
+        bool             fServer = (oFlags & OPTION_SERVER);
 
         for(struct addrinfo *Handle = pHandle; Handle; Handle = Handle->ai_next)
         {
-                 errno   = 0;
-            bool fServer = (oFlags & OPTION_SERVER);
+            struct CONNECT_INFO *NewConnection  = &(MainData->Network.iConnection[numConnections]);            //
+            errno   = 0;
 
             if( !(oFlags & OPTION_QUIET) )
                 switch(fServer)
-                {   case false:  printf("      Configuring connection: ");  break;
-                    default:     printf("      Connecting to: ");  break;
+                {   case false:  printf("      Connecting to: ");  break;
+                    default:     printf("      Configuring connection: ");  break;
                 };
             if( NetworkConfigureNext(Handle,NewConnection) )
             {
-                printf(" [ %s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),&(NewConnection->HostInfo.PortNum[0]));  fflush(stdout);
-                if( NetworkConfigureSocket(NewConnection,fServer) )  {   MainData->Network.nConnections++;  NewConnection++;   };
+                printf(" [ %s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),
+                                      &(NewConnection->HostInfo.PortNum[0]));
+                fflush(stdout);
+                if( NetworkConfigureSocket(NewConnection,fServer) )  numConnections++;
             };
-            if( !(oFlags & OPTION_QUIET) )
-                printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),&(NewConnection->Socket.ErrMsg[0]));
-            if( !fServer )  break;
+            if( !(oFlags & OPTION_QUIET) )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
+                                                                   &(NewConnection->Socket.ErrMsg[0]));
+            if( (!fServer)&&(numConnections) )  break;
         };
         if( pHandle )  freeaddrinfo(pHandle);
-    };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
+        MainData->Network.nConnections = numConnections;
+    };
     if( !(MainData->Network.nConnections) )
     {
 Exit02: puts(" There is no more connections left... ");
         MainData->Flags |= OPTION_LAST;
-    };
+    };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Main message-loop queue ----------------------------------------------------------------------------- */
     while( (oFlags=MainData->Flags) < OPTION_LAST )
