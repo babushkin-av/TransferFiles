@@ -62,16 +62,16 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
         strcpy(&(WorkingHost->HostName[0]),&(WorkingHost->HostNum[0]));
         strcpy(&(WorkingHost->PortName[0]),&(WorkingHost->PortNum[0]));
     };
-    if( (void*)(Handle) != (void*)&(iConn->AddrInfo) )  // Bug fix!
-        memcpy(&(iConn->AddrInfo),Handle,sizeof(struct addrinfo));
-    memcpy(&(iConn->AddrSpace.Raw),(Handle->ai_addr),(Handle->ai_addrlen));
+    if( (void*)(Handle) != (void*)&(iConn->AddrInfo) )  memcpy(&(iConn->AddrInfo),Handle,sizeof(struct addrinfo));
+    if( (void*)(Handle->ai_addr) != (void*)&(iConn->AddrSpace.Raw) )  memcpy(&(iConn->AddrSpace.Raw),(Handle->ai_addr),(Handle->ai_addrlen));
+
     iConn->AddrInfo.ai_addr = &(iConn->AddrSpace.Raw);
     iConn->AddrInfo.ai_next = NULL;
 
 return(true); }
 
 /**************************************************************************************************************************
- * ====================================== *** NetworkConfigureNext() Function *** ======================================= *
+ * ===================================== *** NetworkConfigureSocket() Function *** ====================================== *
  **************************************************************************************************************************/
 
 bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
@@ -84,10 +84,19 @@ bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
         int hSock = socket((Handle->ai_family),(Handle->ai_socktype),(Handle->ai_protocol));
         if( hSock >= 0 )
             switch(fServer)
-            {   case 0:   if( !connect(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  Result = true;  break;
-                default:  if( !bind(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  if( !listen(hSock,0) )  Result = true;
+            {
+                case 0:
+                    if( connect(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  break;
+                    iConn->Status = CONNECTION_ACTIVE;
+                    Result = true;  break;
+
+                default:
+                    if( bind(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  break;
+                    if( listen(hSock,0) )  break;
+                    iConn->Status = CONNECTION_LISTENER;
+                    Result = true;  break;
             };
-            strerror_r((iConn->Socket.ErrCode=errno),&(iConn->Socket.ErrMsg[0]),APP_NAME_MAX);
+        strerror_r((iConn->Socket.ErrCode=errno),&(iConn->Socket.ErrMsg[0]),APP_NAME_MAX);
 
         switch(Result)
         {   case false:  close(hSock);  hSock = -1;  break;
@@ -95,6 +104,34 @@ bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
                          iConn->Socket.Status = fcntl(hSock,F_GETFL);
         };
         iConn->Socket.Handle = hSock;
+    };
+return(Result); }
+
+/**************************************************************************************************************************
+ * ===================================== *** NetworkConfigureAccept() Function *** ====================================== *
+ **************************************************************************************************************************/
+
+bool NetworkConfigureAccept(struct CONNECT_INFO *iConnOriginal, struct CONNECT_INFO *iConnNew){
+
+    bool Result = false;
+
+    if( (iConnOriginal)&&(iConnNew) )
+    {
+        struct addrinfo *Handle = &(iConnNew->AddrInfo);
+
+        memcpy(Handle,&(iConnOriginal->AddrInfo),sizeof(struct addrinfo));
+
+        Handle->ai_addr    = &(iConnNew->AddrSpace.Raw);
+        Handle->ai_addrlen = sizeof(union SOCKET_ADDR);
+
+        int hSock = accept((iConnOriginal->Socket.Handle),(Handle->ai_addr),&(Handle->ai_addrlen));
+        if( hSock >= 0 )
+        {
+            NetworkConfigureNext(Handle,iConnNew);
+            Result = true;
+        };
+        iConnNew->Socket.Handle = hSock;
+        strerror_r((iConnNew->Socket.ErrCode=errno),&(iConnNew->Socket.ErrMsg[0]),APP_NAME_MAX);
     };
 return(Result); }
 

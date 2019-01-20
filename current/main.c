@@ -224,7 +224,7 @@ Exit02: puts(" There is no more connections left... ");
 
         switch(MainData->Status)
         {
-            case STATUS_QUEUEINIT:
+            case STATUS_QUEUEINIT:     /* - - - - - epoll() initialization - - - - - */
                 if( oFlags & OPTION_DEBUG )  printf(" Message queue initialization... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;
                 if( oFlags & OPTION_DEBUG )  puts(" OK ");
@@ -284,13 +284,18 @@ Exit02: puts(" There is no more connections left... ");
                     struct CONNECT_INFO *Listener      = (struct CONNECT_INFO*)ePollEvent.data.ptr;
                     struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[ (MainData->Network.nConnections) ]);
 
-//                    if( (ePollEvent.events) & (EPOLLIN|EPOLLOUT) )
-//                        if( ( NewConnection->Socket.Handle = accept((Listener->Socket.Handle),(NewConnection->AddrInfo.ai_addr),&(NewConnection->AddrInfo.ai_addrlen)) ) < 0 )
-//                    if( NewConnection->Socket.Handle >= 0 )
-//                    {
-//                        if( NetworkConfigureNext(&(NewConnection->AddrInfo),NewConnection) )
-//                            if( !(oFlags & OPTION_QUIET) )  {   printf("     Connecting to: [ %s ] ... OK ",&(NewConnection->HostInfo.HostName[0]));  fflush(stdout);   };
-//                    };
+                    if( (ePollEvent.events) & (EPOLLIN|EPOLLOUT) )
+                    {
+                        if( NetworkConfigureAccept(Listener,NewConnection) )  MainData->Network.nConnections++;
+                        if( !(oFlags & OPTION_QUIET) )
+                        {   printf("     Connecting to: [ %s ] ... (%d) %s. \r\n",&(NewConnection->HostInfo.HostNum[0]),
+                                                                                   (NewConnection->Socket.ErrCode),
+                                                                                  &(NewConnection->Socket.ErrMsg[0]));
+                            fflush(stdout);
+                        };
+                    };
+                    if( (ePollEvent.events) & (EPOLLERR|EPOLLHUP) )
+                    {};
                 };
         };
         if( (ePollReady = epoll_wait(ePollHandle,&ePollEvent,1,1000)) < 0 )  break;

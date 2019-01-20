@@ -46,8 +46,10 @@
 #define NETWORK_PORT_NUM       (40678 + IPPORT_USERRESERVED)
 
 enum CONN_STAT {
+    CONNECTION_NULL,
     CONNECTION_LISTENER,
-    CONNECTION_ACTIVE
+    CONNECTION_ACTIVE,
+    CONNECTION_REGISTERED = (INT_MIN)
 };
 
 struct SOCKET_INFO {
@@ -113,6 +115,10 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn);
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer);
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+bool NetworkConfigureAccept(struct CONNECT_INFO *iConnOriginal, struct CONNECT_INFO *iConnNew);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 #ifdef __cplusplus

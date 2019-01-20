@@ -39,7 +39,7 @@
 #if defined (_WIN32) || defined (_WIN64)
 #    define  OPTIONS_OS_STRING         "windows"
 #elif defined (__unix__)
-#    define  OPTIONS_OS_STRING         "*nix"
+#    define  OPTIONS_OS_STRING         "linux"
 #else
 #    define  OPTIONS_OS_STRING         ""
 #endif
