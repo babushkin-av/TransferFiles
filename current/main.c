@@ -279,19 +279,29 @@ Exit02: puts(" There is no more connections left... ");
                         };
                     break;
                 };
-
                 {
                     struct CONNECT_INFO *Listener      = (struct CONNECT_INFO*)ePollEvent.data.ptr;
                     struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[ (MainData->Network.nConnections) ]);
 
                     if( (ePollEvent.events) & (EPOLLIN|EPOLLOUT) )
                     {
-                        if( NetworkConfigureAccept(Listener,NewConnection) )  MainData->Network.nConnections++;
-                        if( !(oFlags & OPTION_QUIET) )
-                        {   printf("     Connecting to: [ %s ] ... (%d) %s. \r\n",&(NewConnection->HostInfo.HostNum[0]),
-                                                                                   (NewConnection->Socket.ErrCode),
-                                                                                  &(NewConnection->Socket.ErrMsg[0]));
-                            fflush(stdout);
+                        switch( (Listener->Status)&(INT_MAX) )
+                        {
+                            case CONNECTION_NULL:
+                                break;
+
+                            case CONNECTION_LISTENER:
+                                if( NetworkConfigureAccept(Listener,NewConnection) )  MainData->Network.nConnections++;
+                                if( !(oFlags & OPTION_QUIET) )
+                                {   printf("     Connecting to: [ %s ] ... (%d) %s. \r\n",&(NewConnection->HostInfo.HostNum[0]),
+                                                                                           (NewConnection->Socket.ErrCode),
+                                                                                          &(NewConnection->Socket.ErrMsg[0]));
+                                    fflush(stdout);
+                                };
+                                break;
+
+                            case CONNECTION_ACTIVE:
+                                break;
                         };
                     };
                     if( (ePollEvent.events) & (EPOLLERR|EPOLLHUP) )
