@@ -29,7 +29,6 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
@@ -94,6 +93,8 @@ struct CONNECT_INFO {
 
 struct NETWORK_DATA {
     size_t                     nConnections;                         // All connections;
+    size_t                     nRegistered;
+    size_t                     nActive;
     struct CONNECT_INFO        iConnection[NETWORK_MAX_CONN];
 };
 

@@ -102,6 +102,7 @@ bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
         {   case false:  close(hSock);  hSock = -1;  break;
             case true:   iConn->Socket.Flags  = fcntl(hSock,F_GETFD);
                          iConn->Socket.Status = fcntl(hSock,F_GETFL);
+                         iConn->Socket.Start  = time(NULL);
         };
         iConn->Socket.Handle = hSock;
     };
@@ -127,8 +128,13 @@ bool NetworkConfigureAccept(struct CONNECT_INFO *iConnOriginal, struct CONNECT_I
         int hSock = accept((iConnOriginal->Socket.Handle),(Handle->ai_addr),&(Handle->ai_addrlen));
         if( hSock >= 0 )
         {
-            NetworkConfigureNext(Handle,iConnNew);
             Result = true;
+            NetworkConfigureNext(Handle,iConnNew);
+
+            iConnNew->Status        = CONNECTION_ACTIVE;
+            iConnNew->Socket.Flags  = fcntl(hSock,F_GETFD);
+            iConnNew->Socket.Status = fcntl(hSock,F_GETFL);
+            iConnNew->Socket.Start  = time(NULL);
         };
         iConnNew->Socket.Handle = hSock;
         strerror_r((iConnNew->Socket.ErrCode=errno),&(iConnNew->Socket.ErrMsg[0]),APP_NAME_MAX);
