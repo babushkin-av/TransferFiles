@@ -73,6 +73,7 @@ struct MAIN_DATA {
 bool SignalHandlerInit(struct sigaction *Action);
 void SignalHandler(int signo);
 
+bool          Main_GetSystemInfo(struct utsname *SysInfo);
 unsigned int  Main_ParsingCommandLine(char **ArgV);
 int           Main_ShowDebugInfo(void);
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
@@ -83,45 +84,44 @@ int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 
 int main(int argc, char *argv[], char *env[]){
 
-    unsigned int  oFlags = OPTION_NULL;      // Initializing flags;
+    unsigned int  oFlags = OPTION_LAST;      // Initializing flags;
+
+    /* Memory allocation ----------------------------------------------------------------------------------- */
+
+    if( MainData = (struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA)) )
+        if( MainData->Options.oIndexes = (unsigned int*)calloc(GetOptionIndex(oFlags),sizeof(unsigned int)) )
+            oFlags = OPTION_NULL;
+
+    if( oFlags )  error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+
+    /* Initializating signal handler ----------------------------------------------------------------------- */
+
+    if( !(SignalHandlerInit(&(MainData->Signals))) )
+        error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
+
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+    /* Get some system info -------------------------------------------------------------------------------- */
+
+    GetTimeStart(&(MainData->Time),NULL);                                                                  // Initializating timer.
+    Main_GetSystemInfo(&(MainData->SysInfo));
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+
+    /* Parsing command-line ----------------------------------------------------------------- */
+    {
+        if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&argv[0]) ) )  exit(EXIT_SUCCESS);
+        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #if defined (APP_DEBUG)
     oFlags = oFlags|OPTION_DEBUG;
 #endif
 
-    /* Memory allocation ----------------------------------------------------------------------------------- */
-    if( !( MainData = (struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA)) ) )
-Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-    /* Get some system info -------------------------------------------------------------------------------- */
-    {
-        GetTimeStart(&(MainData->Time),NULL);                                                                  // Initializating timer.
-        uname(&(MainData->SysInfo));
-
-        char *ThisHost = &(MainData->SysInfo.nodename[0]);
-        if( !*ThisHost )  gethostname(ThisHost,sizeof(MainData->SysInfo.nodename));
-    };
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-    /* Initializating signal handler ----------------------------------------------------------------------- */
-    {
-        MainData->Signals.sa_handler = (SignalHandler);
-        if( !(SignalHandlerInit(&(MainData->Signals))) )
-            error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
-    };
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-    /* Parsing command-line ----------------------------------------------------------------- */
-    {
-        if( !( MainData->Options.oIndexes = (unsigned int*)calloc(GetOptionIndex(OPTION_LAST),sizeof(unsigned int)) ) )  goto Exit01;
-        if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&argv[0]) ) )  exit(EXIT_SUCCESS);
-        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
         if( oFlags & OPTION_DEBUG ) /* Show some debug info ------------------------------------------------ */
-        {
-           oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;  Main_ShowDebugInfo();
-        };
+        {   oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;  Main_ShowDebugInfo();   };
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
         /* Initializing the network structures and flags --------------------------------------------------- */
@@ -311,7 +311,8 @@ bool SignalHandlerInit(struct sigaction *Action){
     const int  Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
 
     if(Action)
-    {   Action->sa_flags = (SA_RESETHAND|SA_NODEFER);
+    {   Action->sa_handler = (SignalHandler);
+        Action->sa_flags   = (SA_RESETHAND|SA_NODEFER);
 
         if( (Result = (bool)(sigfillset(&(Action->sa_mask))+1)) )
             for(unsigned int i=0; i<5; i++)
@@ -337,6 +338,24 @@ void SignalHandler(int SigNo){
             break;
     };
 }
+
+/**************************************************************************************************************************
+ * =================================== *** Main_ParsingCommandLine() function *** ======================================= *
+ **************************************************************************************************************************/
+
+bool Main_GetSystemInfo(struct utsname *SysInfo){
+
+    bool Result = false;
+
+    if( SysInfo )
+        if( !uname(&(MainData->SysInfo)) )
+        {
+            char *ThisHost = &(SysInfo->nodename[0]);
+            if( !*ThisHost )
+                gethostname(ThisHost,sizeof(SysInfo->nodename));
+            Result = true;
+        };
+return(Result); }
 
 /**************************************************************************************************************************
  * =================================== *** Main_ParsingCommandLine() function *** ======================================= *
