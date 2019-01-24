@@ -1,15 +1,19 @@
 /**************************************************************************************************************************
  *                                                                                                                        *
- *     File: main.c (version 0.8).                                                                                        *
+ *     File: main.c (version 0.9).                                                                                        *
  *     Type: main program.                                                                                                *
  *     Distribution: source/object code.                                                                                  *
- *     License: GNU General Public License version 3.                                                                     *
- *     Dependency: options module (options.h, options.c), network module (network.h, network.c)                           *
- *     Desription: main program.                                                                                          *
+ *     License: GNU GPL (ver.3+).                                                                                         *
+ *     Dependency:                                                                                                        *
+ *                 -                                                                                                      *
+ *                 - options module (options.h, options.c),                                                               *
+ *                 - clock module (clock.h, clock.c),                                                                     *
+ *                 - network module (network.h, network.c).                                                               *
+ *     Desription: .                                                                                                      *
  *                                                                                                                        *
  **************************************************************************************************************************
  *                                                                                                                        *
- *     Copyleft, 2017-2018, <feedback@babushkin.ru.net>, Alexander Babushkin.                                             *
+ *     Copyleft, 2017-2019, <feedback@babushkin.ru.net>, Alexander Babushkin.                                             *
  *                                                                                                                        *
  *     This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public  *
  * License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later   *
@@ -39,22 +43,26 @@
  * ============================================== *** Global variables *** ============================================== *
  **************************************************************************************************************************/
 
-
 enum APP_STATUS {
     STATUS_QUEUEINIT,
     STATUS_CONFIGURE,
     STATUS_LAST
 };
 
+struct APP_OPTIONS {
+    unsigned int             aFlags;                           // The Application flags;
+    unsigned int             iFiles;                           // Index of the given files;
+    unsigned int            *oIndexes;                         // Temporary buffer for the indexes;
+    char                    *rHost;                            // Remote Host;
+    char                    *rPort;                            // Remote port.
+};
+
 struct MAIN_DATA {
-    unsigned int             Flags;                            // The Application flags;
-    unsigned int             Files;                            // Index of the given files;
-    char                    *Host;                             //
-    char                    *Port;                             //
     enum   APP_STATUS        Status;                           // Status of the message-loop;
     struct APP_CLOCK         Time;                             // Current time;
-    struct sigaction         Signals;                          //
+    struct APP_OPTIONS       Options;                          //
     struct utsname           SysInfo;                          // System information;
+    struct sigaction         Signals;                          //
     struct NETWORK_DATA      Network;                          //
 } *MainData;
 
@@ -62,17 +70,15 @@ struct MAIN_DATA {
  * ============================================ *** Function prototypes *** ============================================= *
  **************************************************************************************************************************/
 
-#if defined (APP_DEBUG)
-#    define ErrMsg(str)          fprintf(stderr,"\r\n {%s,%u}: %s (%d): %s \r\n",__FILE__,__LINE__,(str),errno,strerror(errno))
-#else
-#    define ErrMsg(str)          fprintf(stderr,"\r\n %s (%d): %s \r\n",(str),errno,strerror(errno))
-#endif
-
 bool SignalHandlerInit(struct sigaction *Action);
 void SignalHandler(int signo);
 
+unsigned int  Main_ParsingCommandLine(char **ArgV);
+int           Main_ShowDebugInfo(void);
+int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
+
 /**************************************************************************************************************************
- * =============================================== *** main function *** ================================================ *
+ * ============================================== *** main() function *** =============================================== *
  **************************************************************************************************************************/
 
 int main(int argc, char *argv[], char *env[]){
@@ -94,7 +100,7 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
         uname(&(MainData->SysInfo));
 
         char *ThisHost = &(MainData->SysInfo.nodename[0]);
-        if( !ThisHost )  gethostname(ThisHost,sizeof(MainData->SysInfo.nodename));
+        if( !*ThisHost )  gethostname(ThisHost,sizeof(MainData->SysInfo.nodename));
     };
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -108,38 +114,13 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
 
     /* Parsing command-line ----------------------------------------------------------------- */
     {
-        unsigned int  oID;                                                                                    // Option ID;
-        unsigned int  oCurrent = 1;                                                                           // Current index.
-        unsigned int  oMax     = GetOptionIndex(OPTION_LAST);                                                 // Maximum number of Indexes;
-        unsigned int *oIndexes = (unsigned int*)calloc(oMax,sizeof(unsigned int));                            // Temporary buffer for the indexes;
-
-        if( !oIndexes )  goto Exit01;
-
-        while( oID = GetOptionID(argv[oCurrent]) )                                                            // Recognizing a string:
-        {
-            if( oID == OPTION_HELP )  {   ShowHelp();  exit(EXIT_SUCCESS);   };                               // - the case for a "help" option;
-            if( oID == OPTION_VERSION )  {   ShowVersion();  exit(EXIT_SUCCESS);   };                         // - the case for a "version" option;
-                                                                                                              // - the case for a default scenario:
-            oFlags = oFlags|oID;                                                                              //
-            *(oIndexes + GetOptionIndex(oID)) = oCurrent;                                                     //
-            oCurrent++;                                                                                       //
-        };
+        if( !( MainData->Options.oIndexes = (unsigned int*)calloc(GetOptionIndex(OPTION_LAST),sizeof(unsigned int)) ) )  goto Exit01;
+        if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&argv[0]) ) )  exit(EXIT_SUCCESS);
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
         if( oFlags & OPTION_DEBUG ) /* Show some debug info ------------------------------------------------ */
         {
-            ShowVersion();
-            printf(" Program startup: %s; \r\n",&(MainData->Time.String[0]));
-            printf(" On %s host: %s \r\n",&(MainData->SysInfo.sysname[0]),
-                                          &(MainData->SysInfo.nodename[0]));
-            printf(" Allocating: %u+%u bytes. \r\n\r\n",sizeof(struct MAIN_DATA),oMax*sizeof(unsigned int));
-
-            puts(" Parsing options: ");
-            for(unsigned int i=1; i<oMax; i++)
-                if( oID = *(oIndexes+i) )
-                    printf("     % 2u:% 2u: %s \r\n",i,oID,GetOptionHelp(1<<(i-1)));
-
-            oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
+           oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;  Main_ShowDebugInfo();
         };
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -158,30 +139,32 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
 
             case OPTION_SERVER:  NewConnection->AddrInfo.ai_flags|= AI_PASSIVE;                               // - the case for a "server" option;
                                  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a server... ");
-                                 MainData->Host = GetOptionVar(OPTION_SERVER);  break;
+                                 MainData->Options.rHost = GetOptionVar(OPTION_SERVER);
+                                 break;
 
             case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client... ");          // - the case for a "client" option;
-                                 MainData->Host = GetOptionVar(OPTION_CLIENT);  break;
+                                 MainData->Options.rHost = GetOptionVar(OPTION_CLIENT);
+                                 break;
 
             default:             error(EINVAL,EINVAL," Error: ambigous options: '%s' and '%s'. ",             // - detecting ambiguous options.
                                      argv[ *(oIndexes + GetOptionIndex(OPTION_SERVER)) ],
-                                     argv[ *(oIndexes + GetOptionIndex(OPTION_CLIENT)) ]);  break;
+                                     argv[ *(oIndexes + GetOptionIndex(OPTION_CLIENT)) ]);
+                                 break;
         };
-        if( oFlags & OPTION_PORT )  MainData->Port = GetOptionVar(OPTION_PORT);                               //
-        if( !(MainData->Port) )     MainData->Port = "45678\0";                                               // Default port.
+        if( oFlags & OPTION_PORT )  MainData->Options.rPort = GetOptionVar(OPTION_PORT);                      //
+        if( !(MainData->Options.rPort) )     MainData->Options.rPort = "45678\0";                             // Default port.
 
         NewConnection->AddrInfo.ai_protocol = IPPROTO_TCP;                                                    // Specifing the protocol and
         NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;                                                    // the preferred socket type.
 
-        MainData->Flags = oFlags;
-        MainData->Files = oCurrent;
-        free(oIndexes);
+        MainData->Options.aFlags = oFlags;
+        free(MainData->Options.oIndexes);
     };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Configuring the network connections ----------------------------------------------------------------- */
     {
         size_t    numConnections = 0;
-        struct addrinfo *pHandle = NetworkConfigureInit((MainData->Host),(MainData->Port),&(MainData->Network.iConnection[0]));
+        struct addrinfo *pHandle = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
         bool             fServer = (oFlags & OPTION_SERVER);
 
         for(struct addrinfo *Handle = pHandle; Handle; Handle = Handle->ai_next)
@@ -211,11 +194,11 @@ Exit01: error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
     if( !(MainData->Network.nConnections) )
     {
 Exit02: puts(" There is no more connections left... ");
-        MainData->Flags |= OPTION_LAST;
+        MainData->Options.aFlags |= OPTION_LAST;
     };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Main message-loop queue ----------------------------------------------------------------------------- */
-    while( (oFlags=MainData->Flags) < OPTION_LAST )
+    while( (oFlags=MainData->Options.aFlags) < OPTION_LAST )
     {
         static struct epoll_event  ePollEvent;                                                                //
         int                        ePollHandle;                                                               //
@@ -324,36 +307,90 @@ return(EXIT_SUCCESS); }
 
 bool SignalHandlerInit(struct sigaction *Action){
 
-    bool result = false;
+    bool       Result     = false;
     const int  Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
 
     if(Action)
     {   Action->sa_flags = (SA_RESETHAND|SA_NODEFER);
 
-        if( (result = (bool)(sigfillset(&(Action->sa_mask))+1)) )
+        if( (Result = (bool)(sigfillset(&(Action->sa_mask))+1)) )
             for(unsigned int i=0; i<5; i++)
-                if( !(result = (bool)(sigaction(Signals[i],Action,NULL)+1)) )  break;
+                if( !(Result = (bool)(sigaction(Signals[i],Action,NULL)+1)) )  break;
     };
-return(result); }
+return(Result); }
 
 /**************************************************************************************************************************
- * ========================================== *** SignalHandler function *** ============================================ *
+ * ========================================= *** SignalHandler() function *** =========================================== *
  **************************************************************************************************************************/
 
-void SignalHandler(int signo){
+void SignalHandler(int SigNo){
 
-    switch(signo)
+    switch(SigNo)
     {
         case SIGQUIT:
         case SIGHUP:
         case SIGTERM:
         case SIGTSTP:
         case SIGINT:
-            MainData->Flags|=OPTION_LAST;
+            MainData->Options.aFlags|=OPTION_LAST;
         default:
             break;
     };
 }
+
+/**************************************************************************************************************************
+ * =================================== *** Main_ParsingCommandLine() function *** ======================================= *
+ **************************************************************************************************************************/
+
+unsigned int Main_ParsingCommandLine(char **ArgV){
+
+    unsigned int  oCurrent = 1;                                                                           // Current index.
+    unsigned int *pID=(MainData->Options.oIndexes);
+
+    for(unsigned int oID; oID=GetOptionID(ArgV[oCurrent]); oCurrent++ ) // Recognizing a string:
+        switch(oID)
+        {
+            case OPTION_HELP:     ShowHelp();  return(0);                                                 // - the case for a "help" option;
+            case OPTION_VERSION:  ShowVersion();  return(0);                                              // - the case for a "version" option;
+            default:                                                                                                   // - the case for a default scenario:
+                MainData->Options.aFlags|= oID;                                                                              //
+               *(pID + GetOptionIndex(oID)) = oCurrent;                                                     //
+        };
+return(oCurrent); }
+
+/**************************************************************************************************************************
+ * ====================================== *** Main_ShowDebugInfo() function *** ========================================= *
+ **************************************************************************************************************************/
+
+int Main_ShowDebugInfo(void){
+
+    int Result = 0;
+
+    Result+=ShowVersion();
+    Result+=printf(" Program startup: %s; \r\n",&(MainData->Time.String[0]));
+
+    Result+=printf(" On %s host: %s \r\n",&(MainData->SysInfo.sysname[0]),
+                                          &(MainData->SysInfo.nodename[0]));
+    Result+=printf(" Allocating: %u bytes. \r\n\r\n",sizeof(struct MAIN_DATA));
+    Result+=puts(" Parsing options: ");
+
+    Result+=Main_ShowOptionsInfo((MainData->Options.oIndexes),GetOptionIndex(OPTION_LAST));
+
+return(Result); }
+
+/**************************************************************************************************************************
+ * ===================================== *** Main_ShowOptionsInfo() function *** ======================================== *
+ **************************************************************************************************************************/
+
+int Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax){
+
+    int Result = 0;
+
+    if( oIndexes )
+        for(unsigned int i=1; i<oMax; i++,oIndexes++)
+            if( *oIndexes )  Result+=printf("     % 2u:% 2u: %s \r\n",i,*oIndexes,GetOptionHelp(1<<(i-1)));
+
+return(Result); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
