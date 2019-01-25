@@ -97,17 +97,17 @@ int main(int argc, char *argv[], char *env[]){
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-    /* Initializing the network structures and flags ------------------------------------------------------- */
+    /* Initializing "MainData" structures and flags -------------------------------------------------------- */
 
     if( !SignalHandlerInit(&(MainData->Signals)) )                                                            // Initializating signal handler.
         error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
 
     GetTimeStart(&(MainData->Time),NULL);                                                                     // Initializating timer.
+
     GetSystemInfo(&(MainData->SysInfo));                                                                      // Get some system info.
 
-    MainData->Options.iMax = GetOptionIndex(OPTION_LAST);
-    if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&(MainData->Options),&argv[0]) ) )              // Parsing command-line.
-        exit(EXIT_SUCCESS);
+    MainData->Options.iMax   = GetOptionIndex(OPTION_LAST);
+    MainData->Options.iFiles = Main_ParsingCommandLine(&(MainData->Options),&argv[0]);                        // Parsing command-line.
 
     oFlags = (MainData->Options.oFlags);
 #if defined (APP_DEBUG)
@@ -143,9 +143,11 @@ int main(int argc, char *argv[], char *env[]){
                 };
             if( NetworkConfigureNext(Handle,NewConnection) )
             {
-                printf(" [ %s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),
-                                      &(NewConnection->HostInfo.PortNum[0]));
+                if( !(oFlags & OPTION_QUIET) )
+                {   printf(" [ %s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),
+                                          &(NewConnection->HostInfo.PortNum[0]));
                 fflush(stdout);
+                };
                 if( NetworkConfigureSocket(NewConnection,fServer) )  numConnections++;
             };
             if( !(oFlags & OPTION_QUIET) )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
@@ -275,8 +277,7 @@ bool SignalHandlerInit(struct sigaction *Action){
     const int  Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
 
     if(Action)
-    {   Action->sa_handler = (SignalHandler);
-        Action->sa_flags   = (SA_RESETHAND|SA_NODEFER);
+    {   Action->sa_handler = (void*)(SignalHandler);
 
         if( (Result = (bool)(sigfillset(&(Action->sa_mask))+1)) )
             for(unsigned int i=0; i<5; i++)
@@ -292,14 +293,12 @@ void SignalHandler(int SigNo){
 
     switch(SigNo)
     {
-        case SIGQUIT:
-        case SIGHUP:
-        case SIGTERM:
+        case SIGTERM:  exit(EXIT_SUCCESS);  break;
         case SIGTSTP:
         case SIGINT:
-            MainData->Options.oFlags|=OPTION_LAST;
-        default:
-            break;
+        case SIGQUIT:
+        case SIGHUP:
+        default:       MainData->Options.oFlags|=OPTION_LAST;  break;
     };
 }
 
@@ -328,17 +327,19 @@ return(Result); }
 unsigned int Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV){
 
     unsigned int  oCurrent = 1;                                                                               // Current index.
-    unsigned int *pID=(Options->oIndexes);
+    unsigned int *pID;
 
-    for(unsigned int oID; oID=GetOptionID(ArgV[oCurrent]); oCurrent++ )                                       // Recognizing a string:
-        switch(oID)
-        {
-            case OPTION_HELP:     ShowHelp();  return(0);                                                 // - the case for a "help" option;
-            case OPTION_VERSION:  ShowVersion();  return(0);                                              // - the case for a "version" option;
-            default:                                                                                                   // - the case for a default scenario:
-                Options->oFlags|= oID;                                                                              //
-               *(pID + GetOptionIndex(oID)) = oCurrent;                                                     //
-        };
+    if( Options )
+        if( pID=(Options->oIndexes) )
+            for(unsigned int oID; oID=GetOptionID(ArgV[oCurrent]); oCurrent++ )                               // Recognizing a string:
+                switch(oID)
+                {
+                    case OPTION_HELP:     ShowHelp();  return(0);                                             // - the case for a "help" option;
+                    case OPTION_VERSION:  ShowVersion();  return(0);                                          // - the case for a "version" option;
+                    default:                                                                                  // - the case for a default scenario:
+                        Options->oFlags|= oID;                                                                //
+                       *(pID + GetOptionIndex(oID)) = oCurrent;                                               //
+                };
 return(oCurrent); }
 
 /**************************************************************************************************************************
@@ -415,7 +416,7 @@ unsigned int Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPT
         Options->oFlags = oFlags;
 
         if( oFlags & OPTION_PORT )  Options->rPort = GetOptionVar(OPTION_PORT);                               //
-        if( !(MainData->Options.rPort) )  Options->rPort = "45678\0";                                         // Default port.
+        if( !(Options->rPort) )     Options->rPort = "45678\0";                                               // Default port.
 
         return(oFlags);
     };
