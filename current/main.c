@@ -75,10 +75,10 @@ bool SignalHandlerInit(struct sigaction *Action);
 void SignalHandler(int signo);
 bool GetSystemInfo(struct utsname *SysInfo);
 
-unsigned int  Main_ParsingCommandLine(char **ArgV);
+unsigned int  Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
 int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options);
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
-bool          Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
+unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
  **************************************************************************************************************************/
@@ -106,7 +106,8 @@ int main(int argc, char *argv[], char *env[]){
     GetSystemInfo(&(MainData->SysInfo));                                                                      // Get some system info.
 
     MainData->Options.iMax = GetOptionIndex(OPTION_LAST);
-    if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&argv[0]) ) )  exit(EXIT_SUCCESS);              // Parsing command-line.
+    if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&(MainData->Options),&argv[0]) ) )              // Parsing command-line.
+        exit(EXIT_SUCCESS);
 
 #if defined (APP_DEBUG)
     oFlags = oFlags|OPTION_DEBUG;
@@ -118,7 +119,8 @@ int main(int argc, char *argv[], char *env[]){
     };
     free(MainData->Options.oIndexes);
 
-    if( !Main_Configuring(&(MainData->Network.iConnection[0]),&(MainData->Options)) )  exit(EXIT_FAILURE);
+    if( !( oFlags = Main_Configuring(&(MainData->Network.iConnection[0]),&(MainData->Options)) ) )
+        exit(EXIT_FAILURE);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -126,7 +128,7 @@ int main(int argc, char *argv[], char *env[]){
     {
         size_t    numConnections = 0;
         struct addrinfo *pHandle = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
-        bool             fServer = (oFlags & OPTION_SERVER);
+        bool             fServer = oFlags & OPTION_SERVER;
 
         for(struct addrinfo *Handle = pHandle; Handle; Handle = Handle->ai_next)
         {
@@ -322,18 +324,18 @@ return(Result); }
  * =================================== *** Main_ParsingCommandLine() function *** ======================================= *
  **************************************************************************************************************************/
 
-unsigned int Main_ParsingCommandLine(char **ArgV){
+unsigned int Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV){
 
-    unsigned int  oCurrent = 1;                                                                           // Current index.
-    unsigned int *pID=(MainData->Options.oIndexes);
+    unsigned int  oCurrent = 1;                                                                               // Current index.
+    unsigned int *pID=(Options->oIndexes);
 
-    for(unsigned int oID; oID=GetOptionID(ArgV[oCurrent]); oCurrent++ ) // Recognizing a string:
+    for(unsigned int oID; oID=GetOptionID(ArgV[oCurrent]); oCurrent++ )                                       // Recognizing a string:
         switch(oID)
         {
             case OPTION_HELP:     ShowHelp();  return(0);                                                 // - the case for a "help" option;
             case OPTION_VERSION:  ShowVersion();  return(0);                                              // - the case for a "version" option;
             default:                                                                                                   // - the case for a default scenario:
-                MainData->Options.aFlags|= oID;                                                                              //
+                Options->aFlags|= oID;                                                                              //
                *(pID + GetOptionIndex(oID)) = oCurrent;                                                     //
         };
 return(oCurrent); }
@@ -369,7 +371,7 @@ int Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax){
     int Result = 0;
 
     if( oIndexes )
-        for(unsigned int i=1; i<oMax; i++,oIndexes++)
+        for(unsigned int i=0; i<oMax; i++,oIndexes++)
             if( *oIndexes )  Result+=printf("     % 2u:% 2u: %s \r\n",i,*oIndexes,GetOptionHelp(1<<(i-1)));
 
 return(Result); }
@@ -378,9 +380,7 @@ return(Result); }
  * ===================================== *** Main_ShowOptionsInfo() function *** ======================================== *
  **************************************************************************************************************************/
 
-bool Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options){
-
-    bool Result = false;
+unsigned int Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options){
 
     if( (NewConnection)&&(Options) )
     {
@@ -409,16 +409,16 @@ bool Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Op
                                  break;
 
             default:             puts("\r\n Error: ambigous options. Can`t create client and server at the same time. \r\n");
-                                 return(Result);                                                              // - detecting errors.
+                                 return(OPTION_NULL);                                                         // - detecting errors.
         };
         Options->aFlags = oFlags;
 
         if( oFlags & OPTION_PORT )  Options->rPort = GetOptionVar(OPTION_PORT);                               //
         if( !(MainData->Options.rPort) )  Options->rPort = "45678\0";                                         // Default port.
 
-        Result = true;
+        return(oFlags);
     };
-return(Result); }
+return(OPTION_NULL); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
