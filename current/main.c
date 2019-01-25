@@ -52,6 +52,7 @@ enum APP_STATUS {
 struct APP_OPTIONS {
     unsigned int             aFlags;                           // The Application flags;
     unsigned int             iFiles;                           // Index of the given files;
+    unsigned int             iMax;                             //
     unsigned int            *oIndexes;                         // Temporary buffer for the indexes;
     char                    *rHost;                            // Remote Host;
     char                    *rPort;                            // Remote port.
@@ -72,12 +73,12 @@ struct MAIN_DATA {
 
 bool SignalHandlerInit(struct sigaction *Action);
 void SignalHandler(int signo);
+bool GetSystemInfo(struct utsname *SysInfo);
 
-bool          Main_GetSystemInfo(struct utsname *SysInfo);
 unsigned int  Main_ParsingCommandLine(char **ArgV);
-int           Main_ShowDebugInfo(void);
+int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options);
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
-
+bool          Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
  **************************************************************************************************************************/
@@ -96,70 +97,30 @@ int main(int argc, char *argv[], char *env[]){
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+    /* Initializing the network structures and flags ------------------------------------------------------- */
 
-    /* Initializating signal handler ----------------------------------------------------------------------- */
-
-    if( !(SignalHandlerInit(&(MainData->Signals))) )
+    if( !SignalHandlerInit(&(MainData->Signals)) )                                                            // Initializating signal handler.
         error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
 
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    GetTimeStart(&(MainData->Time),NULL);                                                                     // Initializating timer.
+    GetSystemInfo(&(MainData->SysInfo));                                                                      // Get some system info.
 
-    /* Get some system info -------------------------------------------------------------------------------- */
-
-    GetTimeStart(&(MainData->Time),NULL);                                                                  // Initializating timer.
-    Main_GetSystemInfo(&(MainData->SysInfo));
-    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-
-    /* Parsing command-line ----------------------------------------------------------------- */
-    {
-        if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&argv[0]) ) )  exit(EXIT_SUCCESS);
-        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    MainData->Options.iMax = GetOptionIndex(OPTION_LAST);
+    if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&argv[0]) ) )  exit(EXIT_SUCCESS);              // Parsing command-line.
 
 #if defined (APP_DEBUG)
     oFlags = oFlags|OPTION_DEBUG;
 #endif
+    if( oFlags & OPTION_DEBUG )
+    {
+        oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
+        Main_ShowDebugInfo(&(MainData->SysInfo),&(MainData->Time),&(MainData->Options));                      // Show some debug info.
+    };
+    free(MainData->Options.oIndexes);
 
-        if( oFlags & OPTION_DEBUG ) /* Show some debug info ------------------------------------------------ */
-        {   oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;  Main_ShowDebugInfo();   };
-        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    if( !Main_Configuring(&(MainData->Network.iConnection[0]),&(MainData->Options)) )  exit(EXIT_FAILURE);
 
-        /* Initializing the network structures and flags --------------------------------------------------- */
-        struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[0]);                             //
-
-        switch( oFlags & (OPTION_IPV4|OPTION_IPV6) )
-        {
-            case OPTION_IPV4:    NewConnection->AddrInfo.ai_family = AF_INET;  break;                         // - the case for a "IPv4" option;
-            case OPTION_IPV6:    NewConnection->AddrInfo.ai_family = AF_INET6;  break;                        // - the case for a "IPv6" option;
-            default:             NewConnection->AddrInfo.ai_family = AF_UNSPEC;  break;                       // - the case for a default IP-protocol;
-        };
-        switch( oFlags & (OPTION_SERVER|OPTION_CLIENT) )
-        {
-            case 0:              oFlags = oFlags|OPTION_SERVER;
-
-            case OPTION_SERVER:  NewConnection->AddrInfo.ai_flags|= AI_PASSIVE;                               // - the case for a "server" option;
-                                 if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a server... ");
-                                 MainData->Options.rHost = GetOptionVar(OPTION_SERVER);
-                                 break;
-
-            case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client... ");          // - the case for a "client" option;
-                                 MainData->Options.rHost = GetOptionVar(OPTION_CLIENT);
-                                 break;
-
-            default:             error(EINVAL,EINVAL," Error: ambigous options: '%s' and '%s'. ",             // - detecting ambiguous options.
-                                     argv[ *(oIndexes + GetOptionIndex(OPTION_SERVER)) ],
-                                     argv[ *(oIndexes + GetOptionIndex(OPTION_CLIENT)) ]);
-                                 break;
-        };
-        if( oFlags & OPTION_PORT )  MainData->Options.rPort = GetOptionVar(OPTION_PORT);                      //
-        if( !(MainData->Options.rPort) )     MainData->Options.rPort = "45678\0";                             // Default port.
-
-        NewConnection->AddrInfo.ai_protocol = IPPROTO_TCP;                                                    // Specifing the protocol and
-        NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;                                                    // the preferred socket type.
-
-        MainData->Options.aFlags = oFlags;
-        free(MainData->Options.oIndexes);
-    };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Configuring the network connections ----------------------------------------------------------------- */
     {
@@ -343,7 +304,7 @@ void SignalHandler(int SigNo){
  * =================================== *** Main_ParsingCommandLine() function *** ======================================= *
  **************************************************************************************************************************/
 
-bool Main_GetSystemInfo(struct utsname *SysInfo){
+bool GetSystemInfo(struct utsname *SysInfo){
 
     bool Result = false;
 
@@ -381,20 +342,22 @@ return(oCurrent); }
  * ====================================== *** Main_ShowDebugInfo() function *** ========================================= *
  **************************************************************************************************************************/
 
-int Main_ShowDebugInfo(void){
+int Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options){
 
     int Result = 0;
 
-    Result+=ShowVersion();
-    Result+=printf(" Program startup: %s; \r\n",&(MainData->Time.String[0]));
+    if( (SysInfo)&&(Time)&&(Options) )
+    {
+        Result+=ShowVersion();
+        Result+=printf(" Program startup: %s; \r\n",&(Time->String[0]));
 
-    Result+=printf(" On %s host: %s \r\n",&(MainData->SysInfo.sysname[0]),
-                                          &(MainData->SysInfo.nodename[0]));
-    Result+=printf(" Allocating: %u bytes. \r\n\r\n",sizeof(struct MAIN_DATA));
-    Result+=puts(" Parsing options: ");
+        Result+=printf(" On %s host: %s \r\n",&(SysInfo->sysname[0]),
+                                          &(SysInfo->nodename[0]));
+        Result+=printf(" Allocating: %u bytes. \r\n\r\n",sizeof(struct MAIN_DATA));
+        Result+=puts(" Parsing options: ");
 
-    Result+=Main_ShowOptionsInfo((MainData->Options.oIndexes),GetOptionIndex(OPTION_LAST));
-
+        Result+=Main_ShowOptionsInfo((Options->oIndexes),(Options->iMax));
+    };
 return(Result); }
 
 /**************************************************************************************************************************
@@ -409,6 +372,52 @@ int Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax){
         for(unsigned int i=1; i<oMax; i++,oIndexes++)
             if( *oIndexes )  Result+=printf("     % 2u:% 2u: %s \r\n",i,*oIndexes,GetOptionHelp(1<<(i-1)));
 
+return(Result); }
+
+/**************************************************************************************************************************
+ * ===================================== *** Main_ShowOptionsInfo() function *** ======================================== *
+ **************************************************************************************************************************/
+
+bool Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options){
+
+    bool Result = false;
+
+    if( (NewConnection)&&(Options) )
+    {
+        unsigned int oFlags = (Options->aFlags);
+
+        NewConnection->AddrInfo.ai_protocol = IPPROTO_TCP;                                                    // Specifing the protocol and
+        NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;                                                    // the preferred socket type.
+
+        switch( oFlags & (OPTION_IPV4|OPTION_IPV6) )
+        {
+            case OPTION_IPV4:    NewConnection->AddrInfo.ai_family = AF_INET;  break;                         // - the case for a "IPv4" option;
+            case OPTION_IPV6:    NewConnection->AddrInfo.ai_family = AF_INET6;  break;                        // - the case for a "IPv6" option;
+            default:             NewConnection->AddrInfo.ai_family = AF_UNSPEC;  break;                       // - the case for a default IP-protocol;
+        };
+        switch( oFlags & (OPTION_SERVER|OPTION_CLIENT) )
+        {
+            case 0:              oFlags = oFlags|OPTION_SERVER;
+
+            case OPTION_SERVER:  NewConnection->AddrInfo.ai_flags|= AI_PASSIVE;                               // - the case for a "server" option;
+                                 if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a server... ");
+                                 Options->rHost = GetOptionVar(OPTION_SERVER);
+                                 break;
+
+            case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client... ");          // - the case for a "client" option;
+                                 Options->rHost = GetOptionVar(OPTION_CLIENT);
+                                 break;
+
+            default:             puts("\r\n Error: ambigous options. Can`t create client and server at the same time. \r\n");
+                                 return(Result);                                                              // - detecting errors.
+        };
+        Options->aFlags = oFlags;
+
+        if( oFlags & OPTION_PORT )  Options->rPort = GetOptionVar(OPTION_PORT);                               //
+        if( !(MainData->Options.rPort) )  Options->rPort = "45678\0";                                         // Default port.
+
+        Result = true;
+    };
 return(Result); }
 
 /**************************************************************************************************************************
