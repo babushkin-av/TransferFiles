@@ -50,7 +50,7 @@ enum APP_STATUS {
 };
 
 struct APP_OPTIONS {
-    unsigned int             aFlags;                           // The Application flags;
+    unsigned int             oFlags;                           // The Application flags;
     unsigned int             iFiles;                           // Index of the given files;
     unsigned int             iMax;                             //
     unsigned int            *oIndexes;                         // Temporary buffer for the indexes;
@@ -109,13 +109,13 @@ int main(int argc, char *argv[], char *env[]){
     if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&(MainData->Options),&argv[0]) ) )              // Parsing command-line.
         exit(EXIT_SUCCESS);
 
-    oFlags = (MainData->Options.aFlags);
+    oFlags = (MainData->Options.oFlags);
 #if defined (APP_DEBUG)
-    MainData->Options.aFlags = oFlags = (oFlags|OPTION_DEBUG);
+    MainData->Options.oFlags = oFlags = (oFlags|OPTION_DEBUG);
 #endif
     if( oFlags & OPTION_DEBUG )
     {
-        MainData->Options.aFlags = oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
+        MainData->Options.oFlags = oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
         Main_ShowDebugInfo(&(MainData->SysInfo),&(MainData->Time),&(MainData->Options));                      // Show some debug info.
     };
     free(MainData->Options.oIndexes);
@@ -158,11 +158,11 @@ int main(int argc, char *argv[], char *env[]){
     if( !(MainData->Network.nConnections) )
     {
 Exit02: puts(" There is no more connections left... ");
-        MainData->Options.aFlags |= OPTION_LAST;
+        MainData->Options.oFlags |= OPTION_LAST;
     };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Main message-loop queue ----------------------------------------------------------------------------- */
-    while( (oFlags=MainData->Options.aFlags) < OPTION_LAST )
+    while( (oFlags=MainData->Options.oFlags) < OPTION_LAST )
     {
         static struct epoll_event  ePollEvent;                                                                //
         int                        ePollHandle;                                                               //
@@ -297,7 +297,7 @@ void SignalHandler(int SigNo){
         case SIGTERM:
         case SIGTSTP:
         case SIGINT:
-            MainData->Options.aFlags|=OPTION_LAST;
+            MainData->Options.oFlags|=OPTION_LAST;
         default:
             break;
     };
@@ -336,7 +336,7 @@ unsigned int Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV){
             case OPTION_HELP:     ShowHelp();  return(0);                                                 // - the case for a "help" option;
             case OPTION_VERSION:  ShowVersion();  return(0);                                              // - the case for a "version" option;
             default:                                                                                                   // - the case for a default scenario:
-                Options->aFlags|= oID;                                                                              //
+                Options->oFlags|= oID;                                                                              //
                *(pID + GetOptionIndex(oID)) = oCurrent;                                                     //
         };
 return(oCurrent); }
@@ -385,7 +385,7 @@ unsigned int Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPT
 
     if( (NewConnection)&&(Options) )
     {
-        unsigned int oFlags = (Options->aFlags);
+        unsigned int oFlags = (Options->oFlags);
 
         NewConnection->AddrInfo.ai_protocol = IPPROTO_TCP;                                                    // Specifing the protocol and
         NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;                                                    // the preferred socket type.
@@ -412,7 +412,7 @@ unsigned int Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPT
             default:             puts("\r\n Error: ambigous options. Can`t create client and server at the same time. \r\n");
                                  return(OPTION_NULL);                                                         // - detecting errors.
         };
-        Options->aFlags = oFlags;
+        Options->oFlags = oFlags;
 
         if( oFlags & OPTION_PORT )  Options->rPort = GetOptionVar(OPTION_PORT);                               //
         if( !(MainData->Options.rPort) )  Options->rPort = "45678\0";                                         // Default port.
