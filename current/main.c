@@ -109,12 +109,13 @@ int main(int argc, char *argv[], char *env[]){
     if( !( MainData->Options.iFiles = Main_ParsingCommandLine(&(MainData->Options),&argv[0]) ) )              // Parsing command-line.
         exit(EXIT_SUCCESS);
 
+    oFlags = (MainData->Options.aFlags);
 #if defined (APP_DEBUG)
-    oFlags = oFlags|OPTION_DEBUG;
+    MainData->Options.aFlags = oFlags = (oFlags|OPTION_DEBUG);
 #endif
     if( oFlags & OPTION_DEBUG )
     {
-        oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
+        MainData->Options.aFlags = oFlags = (oFlags|OPTION_QUIET)^OPTION_QUIET;
         Main_ShowDebugInfo(&(MainData->SysInfo),&(MainData->Time),&(MainData->Options));                      // Show some debug info.
     };
     free(MainData->Options.oIndexes);
