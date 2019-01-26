@@ -45,7 +45,11 @@
 
 enum APP_STATUS {
     STATUS_QUEUEINIT,
-    STATUS_CONFIGURE,
+    STATUS_REGISTER,
+    STATUS_SERVER_WAIT,
+    STATUS_SERVER_RECVFILE,
+    STATUS_CLIENT_GREETINGS,
+    STATUS_CLIENT_SENDFILE,
     STATUS_LAST
 };
 
@@ -79,7 +83,10 @@ unsigned int  Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
 int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options);
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
-int           Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags);
+size_t        Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
+
+size_t        MainQueue_Registering(void);
+
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
  **************************************************************************************************************************/
@@ -128,25 +135,11 @@ int main(int argc, char *argv[], char *env[]){
 
     /* Configuring the network connections ----------------------------------------------------------------- */
     {
-        size_t numConnections = 0;
-        bool   fClient        = (oFlags & OPTION_CLIENT);
-        struct addrinfo *Handle0, *NextHandle;
+        struct addrinfo *Handle = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
 
-        Handle0 = NextHandle = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
-        while(NextHandle)
-        {
-            switch( Main_SetupConnection(NextHandle,&(MainData->Network.iConnection[numConnections]),oFlags) )
-            {
-                case CONNECTION_ACTIVE:    MainData->Network.nActive++;
-                case CONNECTION_LISTENER:  numConnections++;
-                default:                   break;
-            };
-            if( (fClient)&&(numConnections) )  break;
+        MainData->Network.nConnections = Main_SetupConnection(Handle,&(MainData->Network),oFlags);
 
-            NextHandle = (NextHandle->ai_next);
-        };
-        MainData->Network.nConnections = numConnections;
-        if( Handle0 )  freeaddrinfo(Handle0);
+        if( Handle )  freeaddrinfo(Handle);
     };
     if( !(MainData->Network.nConnections) )
     {
@@ -168,10 +161,10 @@ Exit02: puts(" There is no more connections left... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;
                 if( oFlags & OPTION_DEBUG )  puts(" OK ");
 
-                MainData->Status = STATUS_CONFIGURE;
+                MainData->Status = STATUS_REGISTER;
                 break;
 
-            case STATUS_CONFIGURE:
+            case STATUS_REGISTER:
                 if( oFlags & OPTION_DEBUG )  printf(" Registering sockets: ");
                 {
                     size_t nSuccess = 0;
@@ -417,20 +410,22 @@ return(OPTION_NULL); }
  * ===================================== *** Main_SetupConnection() function *** ======================================== *
  **************************************************************************************************************************/
 
-int Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags){
+size_t Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags){
 
-    int Result = CONNECTION_NULL;
+    size_t nConnections = 0;
 
-    if( NewConnection )
+    if( (Handle)&&(Net) )
     {
         bool fServer = (oFlags & OPTION_SERVER);
         bool fQuiet  = (oFlags & OPTION_QUIET);
-             errno   = 0;
 
-        if( !fQuiet )
-        {    if(fServer)  printf("      Configuring connection: ");  else
-                          printf("      Connecting to: ");
-        };
+        do
+        {   struct CONNECT_INFO *NewConnection = &(Net->iConnection[nConnections]);
+
+            if( !fQuiet )
+            {    if(fServer)  printf("      Configuring connection: ");  else
+                              printf("      Connecting to: ");
+            };
             if( NetworkConfigureNext(Handle,NewConnection) )
             {
                 if( !fQuiet )
@@ -438,12 +433,30 @@ int Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnec
                                           &(NewConnection->HostInfo.PortNum[0]));
                     fflush(stdout);
                 };
-                Result = NetworkConfigureSocket(NewConnection,fServer);
-            };
+                switch( NetworkConfigureSocket(NewConnection,fServer) )
+                {
+                    case CONNECTION_ACTIVE:    Net->nActive++;
+                    case CONNECTION_LISTENER:  nConnections++;
+                    default:                   break;
+            };  };
             if( !fQuiet )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
                                                   &(NewConnection->Socket.ErrMsg[0]));
+
+            if( (!fServer)&&(nConnections) )  break;
+
+        }while( Handle = Handle->ai_next );
     };
-return(Result); };
+return(nConnections); };
+
+/**************************************************************************************************************************
+ * ==================================== *** MainQueue_Registering() function *** ======================================== *
+ **************************************************************************************************************************/
+
+size_t MainQueue_Registering(void){
+
+    size_t Result = 0;
+
+return(Result); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
