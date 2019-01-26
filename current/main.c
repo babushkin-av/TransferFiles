@@ -79,6 +79,7 @@ unsigned int  Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
 int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options);
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
+bool          Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags);
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
  **************************************************************************************************************************/
@@ -128,34 +129,13 @@ int main(int argc, char *argv[], char *env[]){
     /* Configuring the network connections ----------------------------------------------------------------- */
     {
         size_t    numConnections = 0;
-        struct addrinfo *pHandle = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
-        bool             fServer = oFlags & OPTION_SERVER;
+        struct addrinfo *Handle0 = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
 
-        for(struct addrinfo *Handle = pHandle; Handle; Handle = Handle->ai_next)
-        {
-            struct CONNECT_INFO *NewConnection  = &(MainData->Network.iConnection[numConnections]);            //
-            errno   = 0;
+        for(struct addrinfo *NextHandle = Handle0; (NextHandle)&&(oFlags&OPTION_SERVER)&&(!numConnections); NextHandle = NextHandle->ai_next)
+            if( Main_SetupConnection(NextHandle,&(MainData->Network.iConnection[numConnections]),oFlags) )  numConnections++;
 
-            if( !(oFlags & OPTION_QUIET) )
-                switch(fServer)
-                {   case false:  printf("      Connecting to: ");  break;
-                    default:     printf("      Configuring connection: ");  break;
-                };
-            if( NetworkConfigureNext(Handle,NewConnection) )
-            {
-                if( !(oFlags & OPTION_QUIET) )
-                {   printf(" [ %s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),
-                                          &(NewConnection->HostInfo.PortNum[0]));
-                fflush(stdout);
-                };
-                if( NetworkConfigureSocket(NewConnection,fServer) )  numConnections++;
-            };
-            if( !(oFlags & OPTION_QUIET) )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
-                                                                   &(NewConnection->Socket.ErrMsg[0]));
-            if( (!fServer)&&(numConnections) )  break;
-        };
-        if( pHandle )  freeaddrinfo(pHandle);
         MainData->Network.nConnections = numConnections;
+        if( Handle0 )  freeaddrinfo(Handle0);
     };
     if( !(MainData->Network.nConnections) )
     {
@@ -399,7 +379,7 @@ unsigned int Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPT
         };
         switch( oFlags & (OPTION_SERVER|OPTION_CLIENT) )
         {
-            case 0:              oFlags = oFlags|OPTION_SERVER;
+            case 0:              oFlags = (oFlags|OPTION_SERVER);
 
             case OPTION_SERVER:  NewConnection->AddrInfo.ai_flags|= AI_PASSIVE;                               // - the case for a "server" option;
                                  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a server... ");
@@ -421,6 +401,38 @@ unsigned int Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPT
         return(oFlags);
     };
 return(OPTION_NULL); }
+
+/**************************************************************************************************************************
+ * ===================================== *** Main_SetupConnection() function *** ======================================== *
+ **************************************************************************************************************************/
+
+bool Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags){
+
+    bool Result = false;
+
+    if( NewConnection )
+    {
+        bool fServer = (oFlags & OPTION_SERVER);
+        bool fQuiet  = (oFlags & OPTION_QUIET);
+             errno   = 0;
+
+        if( !fQuiet )
+        {    if(fServer)  printf("      Configuring connection: ");  else
+                          printf("      Connecting to: ");
+        };
+            if( NetworkConfigureNext(Handle,NewConnection) )
+            {
+                if( !fQuiet )
+                {   printf(" [ %s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),
+                                          &(NewConnection->HostInfo.PortNum[0]));
+                    fflush(stdout);
+                };
+                if( NetworkConfigureSocket(NewConnection,fServer) )  Result = true;
+            };
+            if( !fQuiet )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
+                                                  &(NewConnection->Socket.ErrMsg[0]));
+    };
+return(Result); };
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
