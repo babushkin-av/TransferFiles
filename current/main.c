@@ -79,7 +79,7 @@ unsigned int  Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
 int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options);
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
-bool          Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags);
+int           Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags);
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
  **************************************************************************************************************************/
@@ -128,12 +128,23 @@ int main(int argc, char *argv[], char *env[]){
 
     /* Configuring the network connections ----------------------------------------------------------------- */
     {
-        size_t    numConnections = 0;
-        struct addrinfo *Handle0 = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
+        size_t numConnections = 0;
+        bool   fClient        = (oFlags & OPTION_CLIENT);
+        struct addrinfo *Handle0, *NextHandle;
 
-        for(struct addrinfo *NextHandle = Handle0; (NextHandle)&&(oFlags&OPTION_SERVER)&&(!numConnections); NextHandle = NextHandle->ai_next)
-            if( Main_SetupConnection(NextHandle,&(MainData->Network.iConnection[numConnections]),oFlags) )  numConnections++;
+        Handle0 = NextHandle = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
+        while(NextHandle)
+        {
+            switch( Main_SetupConnection(NextHandle,&(MainData->Network.iConnection[numConnections]),oFlags) )
+            {
+                case CONNECTION_ACTIVE:    MainData->Network.nActive++;
+                case CONNECTION_LISTENER:  numConnections++;
+                default:                   break;
+            };
+            if( (fClient)&&(numConnections) )  break;
 
+            NextHandle = (NextHandle->ai_next);
+        };
         MainData->Network.nConnections = numConnections;
         if( Handle0 )  freeaddrinfo(Handle0);
     };
@@ -406,9 +417,9 @@ return(OPTION_NULL); }
  * ===================================== *** Main_SetupConnection() function *** ======================================== *
  **************************************************************************************************************************/
 
-bool Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags){
+int Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags){
 
-    bool Result = false;
+    int Result = CONNECTION_NULL;
 
     if( NewConnection )
     {
@@ -427,7 +438,7 @@ bool Main_SetupConnection(struct addrinfo *Handle, struct CONNECT_INFO *NewConne
                                           &(NewConnection->HostInfo.PortNum[0]));
                     fflush(stdout);
                 };
-                if( NetworkConfigureSocket(NewConnection,fServer) )  Result = true;
+                Result = NetworkConfigureSocket(NewConnection,fServer);
             };
             if( !fQuiet )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
                                                   &(NewConnection->Socket.ErrMsg[0]));

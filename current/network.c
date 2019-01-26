@@ -74,9 +74,9 @@ return(true); }
  * ===================================== *** NetworkConfigureSocket() Function *** ====================================== *
  **************************************************************************************************************************/
 
-bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
+int NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
 
-    bool Result = false;
+    int Result = CONNECTION_NULL;
 
     if( iConn )
     {   struct addrinfo *Handle = &(iConn->AddrInfo);
@@ -88,23 +88,24 @@ bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
                 case 0:
                     if( connect(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  break;
                     iConn->Status = CONNECTION_ACTIVE;
-                    Result = true;  break;
+                    break;
 
                 default:
                     if( bind(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  break;
                     if( listen(hSock,0) )  break;
                     iConn->Status = CONNECTION_LISTENER;
-                    Result = true;  break;
+                    break;
             };
         strerror_r((iConn->Socket.ErrCode=errno),&(iConn->Socket.ErrMsg[0]),APP_NAME_MAX);
 
-        switch(Result)
-        {   case false:  close(hSock);  hSock = -1;  break;
-            case true:   iConn->Socket.Flags  = fcntl(hSock,F_GETFD);
-                         iConn->Socket.Status = fcntl(hSock,F_GETFL);
-                         iConn->Socket.Start  = time(NULL);
+        switch(iConn->Status)
+        {   case CONNECTION_NULL:  close(hSock);  hSock = -1;  break;
+            default:               iConn->Socket.Flags  = fcntl(hSock,F_GETFD);
+                                   iConn->Socket.Status = fcntl(hSock,F_GETFL);
+                                   iConn->Socket.Start  = time(NULL);
         };
         iConn->Socket.Handle = hSock;
+        Result               = (iConn->Status);
     };
 return(Result); }
 

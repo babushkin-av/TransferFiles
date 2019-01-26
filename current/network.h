@@ -115,7 +115,7 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-bool NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer);
+int NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
