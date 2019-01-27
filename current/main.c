@@ -85,7 +85,7 @@ int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
 size_t        Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
 
-size_t        MainQueue_Registering(void);
+bool          MainQueue_Registering(int Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags);
 
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
@@ -175,21 +175,7 @@ Exit02: puts(" There is no more connections left... ");
                     {
                         struct CONNECT_INFO *Connection = &(MainData->Network.iConnection[iConn]);
 
-                        ePollEvent.events   = EPOLLIN|EPOLLOUT;
-                        ePollEvent.data.ptr = Connection;
-                        switch( epoll_ctl(ePollHandle,EPOLL_CTL_ADD,(Connection->Socket.Handle),&ePollEvent) )
-                        {
-                            case 0:
-                                if( oFlags & OPTION_DEBUG )
-                                    printf(" %d.[%d],",iConn,(Connection->Socket.Handle));
-                                nSuccess++;  break;
-                            default:
-                                if( oFlags & OPTION_DEBUG )
-                                    printf(" %d:(%d) - %s, ",iConn,errno,strerror(errno));
-                                close(Connection->Socket.Handle);
-                                Connection->Socket.Handle = -1;
-                        };
-                        iConn++;
+                         iConn++;
                     };
                     if( !( MainData->Network.nConnections = nSuccess ) )  goto Exit02;
                 };
@@ -386,11 +372,11 @@ unsigned int Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPT
             case 0:              oFlags = (oFlags|OPTION_SERVER);
 
             case OPTION_SERVER:  NewConnection->AddrInfo.ai_flags|= AI_PASSIVE;                               // - the case for a "server" option;
-                                 if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a server... ");
+                                 if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a server: ");
                                  Options->rHost = GetOptionVar(OPTION_SERVER);
                                  break;
 
-            case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client... ");          // - the case for a "client" option;
+            case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client: ");          // - the case for a "client" option;
                                  Options->rHost = GetOptionVar(OPTION_CLIENT);
                                  break;
 
@@ -423,8 +409,8 @@ size_t Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, u
         {   struct CONNECT_INFO *NewConnection = &(Net->iConnection[nConnections]);
 
             if( !fQuiet )
-            {    if(fServer)  printf("      Configuring connection: ");  else
-                              printf("      Connecting to: ");
+            {    if(fServer)  printf("    + Configuring connection: ");  else
+                              printf("    + Connecting to: ");
             };
             if( NetworkConfigureNext(Handle,NewConnection) )
             {
@@ -436,7 +422,7 @@ size_t Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, u
                 switch( NetworkConfigureSocket(NewConnection,fServer) )
                 {
                     case CONNECTION_ACTIVE:    Net->nActive++;
-                    case CONNECTION_LISTENER:  nConnections++;
+                    case CONNECTION_LISTENER:  Net->nConnections = (nConnections++);
                     default:                   break;
             };  };
             if( !fQuiet )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
@@ -452,10 +438,24 @@ return(nConnections); };
  * ==================================== *** MainQueue_Registering() function *** ======================================== *
  **************************************************************************************************************************/
 
-size_t MainQueue_Registering(void){
+bool MainQueue_Registering(int Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags){
 
-    size_t Result = 0;
+    bool Result = false;
 
+    if( NewConnection )
+    {
+        bool fServer = (oFlags & OPTION_SERVER);
+        bool fDebug  = (oFlags & OPTION_DEBUG);
+
+        struct epoll_event Event;                                                                //
+
+        Event.data.ptr = NewConnection;
+        if( fServer )  Event.events = EPOLLIN;  else
+                       Event.events = EPOLLOUT;
+
+        epoll_ctl(Handle,EPOLL_CTL_ADD,(NewConnection->Socket.Handle),&Event);
+
+    };
 return(Result); }
 
 /**************************************************************************************************************************
