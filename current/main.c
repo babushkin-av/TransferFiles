@@ -47,9 +47,9 @@ enum APP_STATUS {
     STATUS_QUEUEINIT,
     STATUS_REGISTER,
     STATUS_SERVER_WAIT,
-    STATUS_SERVER_RECVFILE,
+    STATUS_SERVER_RECEIVE,
     STATUS_CLIENT_GREETINGS,
-    STATUS_CLIENT_SENDFILE,
+    STATUS_CLIENT_SEND,
     STATUS_LAST
 };
 
@@ -135,7 +135,9 @@ int main(int argc, char *argv[], char *env[]){
 
     /* Configuring the network connections ----------------------------------------------------------------- */
     {
-        struct addrinfo *Handle = NetworkConfigureInit((MainData->Options.rHost),(MainData->Options.rPort),&(MainData->Network.iConnection[0]));
+        struct addrinfo *Handle = NetworkConfigureInit((MainData->Options.rHost),
+                                                       (MainData->Options.rPort),
+                                                      &(MainData->Network.iConnection[0]));
 
         MainData->Network.nConnections = Main_SetupConnection(Handle,&(MainData->Network),oFlags);
 
@@ -167,17 +169,15 @@ Exit02: puts(" There is no more connections left... ");
             case STATUS_REGISTER:
                 if( oFlags & OPTION_DEBUG )  printf(" Registering sockets: ");
                 {
-                    size_t nSuccess = 0;
-                    size_t iConn    = 0;
-                    size_t iConnMax = (MainData->Network.nConnections);
+                    size_t nRegistered = 0;
 
-                    while( iConn < iConnMax )
+                    struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[0]);
+
+                    for(size_t i=0, iMax=(MainData->Network.nConnections); i<iMax; i++)
                     {
-                        struct CONNECT_INFO *Connection = &(MainData->Network.iConnection[iConn]);
-
-                         iConn++;
+                        if( MainQueue_Registering(ePollHandle,NewConnection,oFlags) )  nRegistered++;
                     };
-                    if( !( MainData->Network.nConnections = nSuccess ) )  goto Exit02;
+                    if( !( MainData->Network.nConnections = nRegistered ) )  goto Exit02;
                 };
                 if( oFlags & OPTION_DEBUG )  puts(" ... OK \r\n");
                 MainData->Status++;
@@ -441,20 +441,19 @@ return(nConnections); };
 bool MainQueue_Registering(int Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags){
 
     bool Result = false;
+    struct epoll_event Event;                                                                //
 
     if( NewConnection )
     {
-        bool fServer = (oFlags & OPTION_SERVER);
-        bool fDebug  = (oFlags & OPTION_DEBUG);
-
-        struct epoll_event Event;                                                                //
-
         Event.data.ptr = NewConnection;
-        if( fServer )  Event.events = EPOLLIN;  else
-                       Event.events = EPOLLOUT;
+        if( oFlags & OPTION_SERVER )  Event.events = EPOLLIN;  else
+                                      Event.events = EPOLLOUT;
 
-        epoll_ctl(Handle,EPOLL_CTL_ADD,(NewConnection->Socket.Handle),&Event);
-
+        if( !epoll_ctl(Handle,EPOLL_CTL_ADD,(NewConnection->Socket.Handle),&Event) )
+        {
+            NewConnection->Status|= CONNECTION_REGISTERED;  Result = true;
+        };
+        strerror_r((NewConnection->Socket.ErrCode=errno),&(NewConnection->Socket.ErrMsg[0]),APP_NAME_MAX);
     };
 return(Result); }
 

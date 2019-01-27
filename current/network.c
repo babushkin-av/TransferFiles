@@ -85,7 +85,7 @@ int NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
         if( hSock >= 0 )
             switch(fServer)
             {
-                case 0:
+                case false:
                     if( connect(hSock,(Handle->ai_addr),(Handle->ai_addrlen)) )  break;
                     iConn->Status = CONNECTION_ACTIVE;
                     break;
@@ -139,6 +139,33 @@ bool NetworkConfigureAccept(struct CONNECT_INFO *iConnOriginal, struct CONNECT_I
         };
         iConnNew->Socket.Handle = hSock;
         strerror_r((iConnNew->Socket.ErrCode=errno),&(iConnNew->Socket.ErrMsg[0]),APP_NAME_MAX);
+    };
+return(Result); }
+
+/**************************************************************************************************************************
+ * ====================================== *** NetworkConfigureClose() Function *** ====================================== *
+ **************************************************************************************************************************/
+
+bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *iConn){
+
+    bool Result = false;
+    struct epoll_event Event;                                                                //
+
+    if( iConn )
+    {
+        int Status = iConn->Status;
+        int Handle = iConn->Socket.Handle;
+
+        if( Status & CONNECTION_REGISTERED )
+        {
+            Event.data.ptr = iConn;
+            Event.events   = EPOLLERR;
+
+            epoll_ctl(EpollHandle,EPOLL_CTL_DEL,Handle,&Event);
+        };
+        if( Status )  if( Handle >= 0 )  close(Handle);
+
+        memset(iConn,0,sizeof(struct CONNECT_INFO));
     };
 return(Result); }
 

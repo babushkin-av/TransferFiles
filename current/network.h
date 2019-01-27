@@ -122,6 +122,10 @@ int NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer);
 bool NetworkConfigureAccept(struct CONNECT_INFO *iConnOriginal, struct CONNECT_INFO *iConnNew);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
+
+bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *iConn);
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
 #ifdef __cplusplus
 };
 #endif
