@@ -83,7 +83,7 @@ unsigned int  Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
 int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options);
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
-size_t        Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
+size_t        Main_SetupConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
 
 bool          MainQueue_Registering(int Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags);
 
@@ -99,6 +99,7 @@ int main(int argc, char *argv[], char *env[]){
 
     if( MainData = (struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA)) )
         if( MainData->Options.oIndexes = (unsigned int*)calloc(GetOptionIndex(oFlags),sizeof(unsigned int)) )
+            if( MainData->Network.iConnection[0] = (struct CONNECT_INFO*)calloc(1,sizeof(struct CONNECT_INFO)) )
             oFlags = OPTION_NULL;
 
     if( oFlags )  error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
@@ -128,7 +129,7 @@ int main(int argc, char *argv[], char *env[]){
     };
     free(MainData->Options.oIndexes);
 
-    if( !( oFlags = Main_Configuring(&(MainData->Network.iConnection[0]),&(MainData->Options)) ) )
+    if( !( oFlags = Main_Configuring((MainData->Network.iConnection[0]),&(MainData->Options)) ) )
         exit(EXIT_FAILURE);
 
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -137,9 +138,9 @@ int main(int argc, char *argv[], char *env[]){
     {
         struct addrinfo *Handle = NetworkConfigureInit((MainData->Options.rHost),
                                                        (MainData->Options.rPort),
-                                                      &(MainData->Network.iConnection[0]));
+                                                       (MainData->Network.iConnection[0]));
 
-        MainData->Network.nConnections = Main_SetupConnection(Handle,&(MainData->Network),oFlags);
+        MainData->Network.nConnections = Main_SetupConnections(Handle,&(MainData->Network),oFlags);
 
         if( Handle )  freeaddrinfo(Handle);
     };
@@ -171,7 +172,7 @@ Exit02: puts(" There is no more connections left... ");
                 {
                     size_t nRegistered = 0;
 
-                    struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[0]);
+                    struct CONNECT_INFO *NewConnection = (MainData->Network.iConnection[0]);
 
                     for(size_t i=0, iMax=(MainData->Network.nConnections); i<iMax; i++)
                     {
@@ -199,7 +200,7 @@ Exit02: puts(" There is no more connections left... ");
                 };
                 {
                     struct CONNECT_INFO *Listener      = (struct CONNECT_INFO*)ePollEvent.data.ptr;
-                    struct CONNECT_INFO *NewConnection = &(MainData->Network.iConnection[ (MainData->Network.nConnections) ]);
+                    struct CONNECT_INFO *NewConnection = (MainData->Network.iConnection[ (MainData->Network.nConnections) ]);
 
                     if( (ePollEvent.events) & (EPOLLIN|EPOLLOUT) )
                     {
@@ -396,7 +397,7 @@ return(OPTION_NULL); }
  * ===================================== *** Main_SetupConnection() function *** ======================================== *
  **************************************************************************************************************************/
 
-size_t Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags){
+size_t Main_SetupConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags){
 
     size_t nConnections = 0;
 
@@ -406,7 +407,13 @@ size_t Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, u
         bool fQuiet  = (oFlags & OPTION_QUIET);
 
         do
-        {   struct CONNECT_INFO *NewConnection = &(Net->iConnection[nConnections]);
+        {   struct CONNECT_INFO *NewConnection = (Net->iConnection[nConnections]);
+
+            if( !NewConnection )
+                if( NewConnection = (struct CONNECT_INFO*)malloc(sizeof(struct CONNECT_INFO)) )
+                    Net->iConnection[nConnections] = NewConnection;
+
+            memset(NewConnection,0,sizeof(struct CONNECT_INFO));
 
             if( !fQuiet )
             {    if(fServer)  printf("    + Configuring connection: ");  else
@@ -430,7 +437,7 @@ size_t Main_SetupConnection(struct addrinfo *Handle, struct NETWORK_DATA *Net, u
 
             if( (!fServer)&&(nConnections) )  break;
 
-        }while( Handle = Handle->ai_next );
+        }while( (Handle=Handle->ai_next)&&(nConnections<NETWORK_MAX_CONN) );
     };
 return(nConnections); };
 

@@ -40,8 +40,8 @@
  * ============================================== *** Global Variables *** ============================================== *
  **************************************************************************************************************************/
 
-#define NETWORK_MAX_CONN       (4)
-#define NETWORK_DATA_BUF       (4096)
+#define NETWORK_MAX_CONN       (4096)
+#define NETWORK_DATA_BUF       (16384)
 #define NETWORK_PORT_NUM       (40678 + IPPORT_USERRESERVED)
 
 enum CONN_STAT {
@@ -95,7 +95,7 @@ struct NETWORK_DATA {
     size_t                     nConnections;                         // All connections;
     size_t                     nRegistered;
     size_t                     nActive;
-    struct CONNECT_INFO        iConnection[NETWORK_MAX_CONN];
+    struct CONNECT_INFO       *iConnection[NETWORK_MAX_CONN];
 };
 
 /**************************************************************************************************************************
