@@ -163,7 +163,7 @@ bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *iConn){
 
             epoll_ctl(EpollHandle,EPOLL_CTL_DEL,Handle,&Event);
         };
-        if( Status )  if( Handle >= 0 )  close(Handle);
+        if( Status )  if( Handle >= 0 )  if( !close(Handle) )  Result = true;
 
         memset(iConn,0,sizeof(struct CONNECT_INFO));
     };

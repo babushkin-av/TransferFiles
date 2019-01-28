@@ -83,7 +83,7 @@ unsigned int  Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
 int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options);
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
-size_t        Main_SetupConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
+size_t        Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
 
 bool          MainQueue_Registering(int Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags);
 
@@ -140,7 +140,7 @@ int main(int argc, char *argv[], char *env[]){
                                                        (MainData->Options.rPort),
                                                        (MainData->Network.iConnection[0]));
 
-        MainData->Network.nConnections = Main_SetupConnections(Handle,&(MainData->Network),oFlags);
+        MainData->Network.nConnections = Main_SetupNewConnections(Handle,&(MainData->Network),oFlags);
 
         if( Handle )  freeaddrinfo(Handle);
     };
@@ -184,48 +184,6 @@ Exit02: puts(" There is no more connections left... ");
                 MainData->Status++;
                 break;
 
-            default:
-                if ( !ePollReady )
-                {
-                    if( GetTimeDiff(&(MainData->Time),NULL) > 0 )
-                        if( !(oFlags & OPTION_QUIET) )
-                        {
-                            char *ConfStr;
-                            if( oFlags & OPTION_CLIENT )  ConfStr = "data";  else
-                                                          ConfStr = "connection";
-                            printf(" Waiting for %s: %s ...  \r",ConfStr,&(MainData->Time.String[0]));
-                            fflush(stdout);
-                        };
-                    break;
-                };
-                {
-                    struct CONNECT_INFO *Listener      = (struct CONNECT_INFO*)ePollEvent.data.ptr;
-                    struct CONNECT_INFO *NewConnection = (MainData->Network.iConnection[ (MainData->Network.nConnections) ]);
-
-                    if( (ePollEvent.events) & (EPOLLIN|EPOLLOUT) )
-                    {
-                        switch( (Listener->Status)&(INT_MAX) )
-                        {
-                            case CONNECTION_NULL:
-                                break;
-
-                            case CONNECTION_LISTENER:
-                                if( NetworkConfigureAccept(Listener,NewConnection) )  MainData->Network.nConnections++;
-                                if( !(oFlags & OPTION_QUIET) )
-                                {   printf("     Connecting to: [ %s ] ... (%d) %s. \r\n",&(NewConnection->HostInfo.HostNum[0]),
-                                                                                           (NewConnection->Socket.ErrCode),
-                                                                                          &(NewConnection->Socket.ErrMsg[0]));
-                                    fflush(stdout);
-                                };
-                                break;
-
-                            case CONNECTION_ACTIVE:
-                                break;
-                        };
-                    };
-                    if( (ePollEvent.events) & (EPOLLERR|EPOLLHUP) )
-                    {};
-                };
         };
         if( (ePollReady = epoll_wait(ePollHandle,&ePollEvent,1,1000)) < 0 )  break;
     };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -233,6 +191,11 @@ Exit02: puts(" There is no more connections left... ");
     error(EXIT_SUCCESS,errno," Exit program (%d)",errno);
 
     /* Closing all connections */
+    for(struct CONNECT_INFO *OldConn=(MainData->Network.iConnection[0]),
+                            *MaxConn=(MainData->Network.iConnection[NETWORK_MAX_CONN]); OldConn<MaxConn; OldConn++)
+        if( OldConn )
+        {   NetworkConfigureClose(-1,OldConn);  free(OldConn);   };
+
     memset(MainData,0,sizeof(struct MAIN_DATA));
     free(MainData);
 
@@ -397,7 +360,7 @@ return(OPTION_NULL); }
  * ===================================== *** Main_SetupConnection() function *** ======================================== *
  **************************************************************************************************************************/
 
-size_t Main_SetupConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags){
+size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags){
 
     size_t nConnections = 0;
 
@@ -413,7 +376,7 @@ size_t Main_SetupConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, 
                 if( NewConnection = (struct CONNECT_INFO*)malloc(sizeof(struct CONNECT_INFO)) )
                     Net->iConnection[nConnections] = NewConnection;
 
-            memset(NewConnection,0,sizeof(struct CONNECT_INFO));
+            if( NewConnection )  memset(NewConnection,0,sizeof(struct CONNECT_INFO));
 
             if( !fQuiet )
             {    if(fServer)  printf("    + Configuring connection: ");  else
@@ -434,7 +397,6 @@ size_t Main_SetupConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, 
             };  };
             if( !fQuiet )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
                                                   &(NewConnection->Socket.ErrMsg[0]));
-
             if( (!fServer)&&(nConnections) )  break;
 
         }while( (Handle=Handle->ai_next)&&(nConnections<NETWORK_MAX_CONN) );
