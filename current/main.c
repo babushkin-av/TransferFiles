@@ -46,7 +46,7 @@
 enum APP_STATUS {
     STATUS_QUEUEINIT,
     STATUS_REGISTER,
-    STATUS_SERVER_WAIT,
+    STATUS_SERVER_READY,
     STATUS_SERVER_RECEIVE,
     STATUS_CLIENT_GREETINGS,
     STATUS_CLIENT_SEND,
@@ -67,7 +67,6 @@ struct MAIN_DATA {
     struct APP_CLOCK         Time;                             // Current time;
     struct APP_OPTIONS       Options;                          //
     struct utsname           SysInfo;                          // System information;
-    struct sigaction         Signals;                          //
     struct NETWORK_DATA      Network;                          //
 } *MainData;
 
@@ -75,7 +74,7 @@ struct MAIN_DATA {
  * ============================================ *** Function prototypes *** ============================================= *
  **************************************************************************************************************************/
 
-bool SignalHandlerInit(struct sigaction *Action);
+bool SignalHandlerInit(void);
 void SignalHandler(int signo);
 bool GetSystemInfo(struct utsname *SysInfo);
 
@@ -84,8 +83,6 @@ int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time
 int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
 size_t        Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
-
-bool          MainQueue_Registering(int Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags);
 
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
@@ -100,7 +97,7 @@ int main(int argc, char *argv[], char *env[]){
     if( MainData = (struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA)) )
         if( MainData->Options.oIndexes = (unsigned int*)calloc(GetOptionIndex(oFlags),sizeof(unsigned int)) )
             if( MainData->Network.iConnection[0] = (struct CONNECT_INFO*)calloc(1,sizeof(struct CONNECT_INFO)) )
-            oFlags = OPTION_NULL;
+                oFlags = OPTION_NULL;
 
     if( oFlags )  error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
 
@@ -108,11 +105,8 @@ int main(int argc, char *argv[], char *env[]){
 
     /* Initializing "MainData" structures and flags -------------------------------------------------------- */
 
-    if( !SignalHandlerInit(&(MainData->Signals)) )                                                            // Initializating signal handler.
-        error(errno,errno," Setting up the signal handler failed.  (%d) ",errno);
-
+    SignalHandlerInit();                                                                                      // Initializating signal handler.
     GetTimeStart(&(MainData->Time),NULL);                                                                     // Initializating timer.
-
     GetSystemInfo(&(MainData->SysInfo));                                                                      // Get some system info.
 
     MainData->Options.iMax   = GetOptionIndex(OPTION_LAST);
@@ -148,45 +142,45 @@ int main(int argc, char *argv[], char *env[]){
     {
 Exit02: puts(" There is no more connections left... ");
         MainData->Options.oFlags |= OPTION_LAST;
-    };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    };
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Main message-loop queue ----------------------------------------------------------------------------- */
-    while( (oFlags=MainData->Options.oFlags) < OPTION_LAST )
+    while( (oFlags=MainData->Options.oFlags) < OPTION_LAST )                                                  // <= while(...)
     {
-        static struct epoll_event  ePollEvent;                                                                //
-        int                        ePollHandle;                                                               //
-        int                        ePollReady;                                                                //
+        static struct epoll_event  ePollEvent;                                                                // Epoll events.
+        static int                 ePollHandle;                                                               // Epoll instance.
+        int                        ePollReady;                                                                // The  number of file descriptors ready for the requested I/O.
 
-        switch(MainData->Status)
+        switch(MainData->Status)                                                                              // <= switch(...)
         {
-            case STATUS_QUEUEINIT:     /* - - - - - epoll() initialization - - - - - */
+            case STATUS_QUEUEINIT:              /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
                 if( oFlags & OPTION_DEBUG )  printf(" Message queue initialization... ");
-                if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;
+                if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;                                   // Epoll initialization.
                 if( oFlags & OPTION_DEBUG )  puts(" OK ");
 
                 MainData->Status = STATUS_REGISTER;
                 break;
 
-            case STATUS_REGISTER:
+            case STATUS_REGISTER:               /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
                 if( oFlags & OPTION_DEBUG )  printf(" Registering sockets: ");
                 {
                     size_t nRegistered = 0;
 
-                    struct CONNECT_INFO *NewConnection = (MainData->Network.iConnection[0]);
+                    for(struct CONNECT_INFO *NewConnection=(MainData->Network.iConnection[0]); NewConnection; NewConnection++)
+                        if( NetworkConfigureRegister(ePollHandle,NewConnection,(oFlags & OPTION_SERVER)) )  nRegistered++;
 
-                    for(size_t i=0, iMax=(MainData->Network.nConnections); i<iMax; i++)
-                    {
-                        if( MainQueue_Registering(ePollHandle,NewConnection,oFlags) )  nRegistered++;
-                    };
                     if( !( MainData->Network.nConnections = nRegistered ) )  goto Exit02;
                 };
                 if( oFlags & OPTION_DEBUG )  puts(" ... OK \r\n");
                 MainData->Status++;
                 break;
 
-        };
-        if( (ePollReady = epoll_wait(ePollHandle,&ePollEvent,1,1000)) < 0 )  break;
-    };/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+            default:  break;
+        };                                                                                                    // <= switch(...)
+        if( (ePollReady = epoll_wait(ePollHandle,&ePollEvent,1,1000)) < 0 )  break;                           // Waiting for internet streams.
+    };                                                                                                        // <= while(...)
+    /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     error(EXIT_SUCCESS,errno," Exit program (%d)",errno);
 
@@ -205,19 +199,18 @@ return(EXIT_SUCCESS); }
  * ======================================= *** SignalHandlerInit() function *** ========================================= *
  **************************************************************************************************************************/
 
-bool SignalHandlerInit(struct sigaction *Action){
+bool SignalHandlerInit(void){
 
-    bool       Result     = false;
-    const int  Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
+    struct sigaction  Action;                          //
+    const int         Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
 
-    if(Action)
-    {   Action->sa_handler = (void*)(SignalHandler);
+    Action.sa_handler = (void*)(SignalHandler);
 
-        if( (Result = (bool)(sigfillset(&(Action->sa_mask))+1)) )
-            for(unsigned int i=0; i<5; i++)
-                if( !(Result = (bool)(sigaction(Signals[i],Action,NULL)+1)) )  break;
-    };
-return(Result); }
+    sigfillset(&(Action.sa_mask));
+    for(unsigned int i=0; i<5; i++)
+        sigaction(Signals[i],&Action,NULL);
+
+return(true); }
 
 /**************************************************************************************************************************
  * ========================================= *** SignalHandler() function *** =========================================== *
@@ -407,24 +400,6 @@ return(nConnections); };
  * ==================================== *** MainQueue_Registering() function *** ======================================== *
  **************************************************************************************************************************/
 
-bool MainQueue_Registering(int Handle, struct CONNECT_INFO *NewConnection, unsigned int oFlags){
-
-    bool Result = false;
-    struct epoll_event Event;                                                                //
-
-    if( NewConnection )
-    {
-        Event.data.ptr = NewConnection;
-        if( oFlags & OPTION_SERVER )  Event.events = EPOLLIN;  else
-                                      Event.events = EPOLLOUT;
-
-        if( !epoll_ctl(Handle,EPOLL_CTL_ADD,(NewConnection->Socket.Handle),&Event) )
-        {
-            NewConnection->Status|= CONNECTION_REGISTERED;  Result = true;
-        };
-        strerror_r((NewConnection->Socket.ErrCode=errno),&(NewConnection->Socket.ErrMsg[0]),APP_NAME_MAX);
-    };
-return(Result); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *

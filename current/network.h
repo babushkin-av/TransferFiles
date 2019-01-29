@@ -123,6 +123,10 @@ bool NetworkConfigureAccept(struct CONNECT_INFO *iConnOriginal, struct CONNECT_I
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
+bool NetworkConfigureRegister(int Handle, struct CONNECT_INFO *NewConnection, bool fServer);
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *iConn);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
