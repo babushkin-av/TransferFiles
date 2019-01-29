@@ -84,6 +84,8 @@ int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
 size_t        Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
 
+size_t        MainQueue_RegisterNewConnections(int Handle, struct CONNECT_INFO **NewConnection, unsigned int oFlags);
+
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
  **************************************************************************************************************************/
@@ -105,7 +107,9 @@ int main(int argc, char *argv[], char *env[]){
 
     /* Initializing "MainData" structures and flags -------------------------------------------------------- */
 
-    SignalHandlerInit();                                                                                      // Initializating signal handler.
+    if( !SignalHandlerInit() )                                                                                // Initializating signal handler.
+        error(errno,errno," Error! Can`t setup signal handler!  (%d) ",errno);
+
     GetTimeStart(&(MainData->Time),NULL);                                                                     // Initializating timer.
     GetSystemInfo(&(MainData->SysInfo));                                                                      // Get some system info.
 
@@ -163,16 +167,9 @@ Exit02: puts(" There is no more connections left... ");
                 break;
 
             case STATUS_REGISTER:               /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-                if( oFlags & OPTION_DEBUG )  printf(" Registering sockets: ");
-                {
-                    size_t nRegistered = 0;
 
-                    for(struct CONNECT_INFO *NewConnection=(MainData->Network.iConnection[0]); NewConnection; NewConnection++)
-                        if( NetworkConfigureRegister(ePollHandle,NewConnection,(oFlags & OPTION_SERVER)) )  nRegistered++;
+                MainQueue_RegisterNewConnections(ePollHandle,&(MainData->Network.iConnection[0]),oFlags);
 
-                    if( !( MainData->Network.nConnections = nRegistered ) )  goto Exit02;
-                };
-                if( oFlags & OPTION_DEBUG )  puts(" ... OK \r\n");
                 MainData->Status++;
                 break;
 
@@ -201,14 +198,17 @@ return(EXIT_SUCCESS); }
 
 bool SignalHandlerInit(void){
 
-    struct sigaction  Action;                          //
-    const int         Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
+    static struct sigaction  Action;                          //
+    const int  Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
 
+#if defined (APP_DEBUG)
+    Action.sa_flags   = SA_RESETHAND;
+#endif
     Action.sa_handler = (void*)(SignalHandler);
-
     sigfillset(&(Action.sa_mask));
+
     for(unsigned int i=0; i<5; i++)
-        sigaction(Signals[i],&Action,NULL);
+        if( sigaction(Signals[i],&Action,NULL) )  return(false);
 
 return(true); }
 
@@ -400,6 +400,17 @@ return(nConnections); };
  * ==================================== *** MainQueue_Registering() function *** ======================================== *
  **************************************************************************************************************************/
 
+size_t MainQueue_RegisterNewConnections(int Handle, struct CONNECT_INFO **NewConnection, unsigned int oFlags){
+
+    size_t nRegistered = 0;
+
+    while( *NewConnection )
+    {
+        if( NetworkConfigureRegister(Handle,*NewConnection,(oFlags & OPTION_SERVER)) )  nRegistered++;
+
+        NewConnection++;
+    };
+return(nRegistered); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
