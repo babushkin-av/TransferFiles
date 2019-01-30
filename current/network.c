@@ -156,12 +156,11 @@ bool NetworkConfigureRegister(int Handle, struct CONNECT_INFO *NewConnection, bo
         Event.data.ptr = NewConnection;
         if( fServer )  Event.events = EPOLLIN;  else  Event.events = EPOLLOUT;
 
-        if( !epoll_ctl(Handle,EPOLL_CTL_ADD,(NewConnection->Socket.Handle),&Event) )
+        if( epoll_ctl(Handle,EPOLL_CTL_ADD,(NewConnection->Socket.Handle),&Event) )
+            strerror_r((NewConnection->Socket.ErrCode=errno),&(NewConnection->Socket.ErrMsg[0]),APP_NAME_MAX);  else
         {
             NewConnection->Status|= CONNECTION_REGISTERED;  Result = true;
-        };
-        strerror_r((NewConnection->Socket.ErrCode=errno),&(NewConnection->Socket.ErrMsg[0]),APP_NAME_MAX);
-    };
+    };  };
 return(Result); }
 
 /**************************************************************************************************************************
