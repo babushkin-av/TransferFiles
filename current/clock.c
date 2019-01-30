@@ -36,7 +36,7 @@
  * =========================================== *** GetLocalTime() Function *** ========================================== *
  **************************************************************************************************************************/
 
-int GetLocalTime(struct APP_CLOCK *Time, char *strFormat){
+int GetLocalTime(struct APP_CLOCK *Time, const char *strFormat){
 
     int        result = 0;
     struct tm *pTmp   = NULL;
@@ -55,7 +55,7 @@ return(result); }
  * =========================================== *** GetTimeStart() Function *** ========================================== *
  **************************************************************************************************************************/
 
-int GetTimeStart(struct APP_CLOCK *Time, char *strFormat){
+int GetTimeStart(struct APP_CLOCK *Time, const char *strFormat){
 
     int result = GetLocalTime(Time,strFormat);
     if( result )  Time->Start = Time->Now;
@@ -66,7 +66,7 @@ return(result); }
  * =========================================== *** GetTimeDiff() Function *** =========================================== *
  **************************************************************************************************************************/
 
-int GetTimeDiff(struct APP_CLOCK *Time, char *strFormat){
+int GetTimeDiff(struct APP_CLOCK *Time, const char *strFormat){
 
     int result = 0;
 

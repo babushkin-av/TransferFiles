@@ -49,15 +49,15 @@ extern "С" {
 #endif
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-int GetLocalTime(struct APP_CLOCK *Time, char *strFormat);
+int GetLocalTime(struct APP_CLOCK *Time, const char *strFormat);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-int GetTimeStart(struct APP_CLOCK *Time, char *strFormat);
+int GetTimeStart(struct APP_CLOCK *Time, const char *strFormat);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-int GetTimeDiff(struct APP_CLOCK *Time, char *strFormat);
+int GetTimeDiff(struct APP_CLOCK *Time, const char *strFormat);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 #ifdef __cplusplus

@@ -162,7 +162,7 @@ Exit02: puts(" There is no more connections left... ");
             case STATUS_QUEUEINIT:              /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
                 if( oFlags & OPTION_DEBUG )  printf(" \r\n Message queue initialization... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;                                   // Epoll initialization.
-                if( oFlags & OPTION_DEBUG )  printf(" (%d) %s. \r\n",errno,strerror(errno));
+                if( oFlags & OPTION_DEBUG )  puts(" OK ");
                 MainData->Status = STATUS_REGISTER;
                 break;
 
@@ -185,7 +185,7 @@ Exit02: puts(" There is no more connections left... ");
 
             default:  break;
         };                                                                                                    // <= switch(...)
-        if( (ePollReady = epoll_wait(ePollHandle,&ePollEvent,1,1000)) < 0 )  break;                           // Waiting for internet streams.
+        if( (ePollReady = epoll_wait(ePollHandle,&ePollEvent,1,1000)) < 0 )  break;                           // <= epoll_wait(...) - waiting for internet streams.
     };                                                                                                        // <= while(...)
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
@@ -208,7 +208,7 @@ return(EXIT_SUCCESS); }
 
 bool SignalHandlerInit(void){
 
-    static struct sigaction  Action;                          //
+    static struct sigaction Action;                                                                           //
     const int  Signals[5] = {   SIGQUIT, SIGHUP, SIGTERM, SIGTSTP, SIGINT   };
 
 #if defined (APP_DEBUG)
@@ -417,27 +417,30 @@ size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, un
 
     if( Net )
     {
-        struct CONNECT_INFO *NewConnection;
         bool fDebug = (oFlags & OPTION_DEBUG);
 
         if( fDebug )  puts(" \r\n Registering sockets: ");
 
+        struct CONNECT_INFO *NewConnection;
+
         while( NewConnection=(Net->iConnection[nConnections]) )
         {
-            switch( NetworkConfigureRegister(Handle,NewConnection,(oFlags & OPTION_SERVER)) )
-            {
-                case false:
-                             break;
+            bool Result = NetworkConfigureRegister(Handle,NewConnection,(oFlags & OPTION_SERVER));
 
-                case true:   Net->nRegistered  = (nRegistered++);
-                             break;
+            if( fDebug )  printf("    +% 2u.[%d] - (%d) %s; \r\n",nConnections,(NewConnection->Socket.Handle),
+                                                                               (NewConnection->Socket.ErrCode),
+                                                                              &(NewConnection->Socket.ErrMsg[0]));
+            if( Result )  nRegistered++;  else
+            {
+                NetworkConfigureClose(Handle,NewConnection);
+                free(NewConnection);
+                Net->iConnection[nConnections] = NewConnection = NULL;
             };
-            if( fDebug )  printf("    +% 2u.[%+d] - (%d) %s; \r\n",nConnections,(NewConnection->Socket.Handle),
-                                                                                (NewConnection->Socket.ErrCode),
-                                                                               &(NewConnection->Socket.ErrMsg[0]));
             nConnections++;
         };
-        Net->nConnections = (nConnections++);
+        if( fDebug )  puts(" ");
+        Net->nConnections = nConnections;
+        Net->nRegistered  = nRegistered;
     };
 return(nRegistered); }
 
@@ -450,9 +453,11 @@ bool MainQueue_ShowReadyMessage(struct APP_CLOCK *Time){
     bool Result = false;
 
     if( Time )
-    {
-
-    };
+        if( GetTimeDiff(Time,"%M:%S") )
+        {
+            printf(" Waiting for connection: %s  \r",&(Time->String));  fflush(stdout);
+            Result = true;
+        };
 return(Result); }
 
 /**************************************************************************************************************************
