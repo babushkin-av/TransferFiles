@@ -96,15 +96,15 @@ extern "С" {
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-    const char* GetOptionHelp(unsigned int ID);
+    const char* GetOptionHelp(const unsigned int ID);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-    char* GetOptionVar(unsigned int ID);
+    char* GetOptionVar(const unsigned int ID);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-    size_t SetOptionVar(unsigned int ID, char *Var);
+    size_t SetOptionVar(const unsigned int ID, char *Var);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 #ifdef __cplusplus

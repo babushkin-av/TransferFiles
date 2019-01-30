@@ -140,7 +140,7 @@ return(OPTION_NULL); }
  * ========================================== *** GetOptionHelp() Function *** ========================================== *
  **************************************************************************************************************************/
 
-const char* GetOptionHelp(unsigned int ID){
+const char* GetOptionHelp(const unsigned int ID){
 
     struct OPTIONS_DATA *DataBase = &ODataDefault[0];
 
@@ -155,7 +155,7 @@ return(DataBase->Help); }
  * =========================================== *** GetOptionVar() Function *** ========================================== *
  **************************************************************************************************************************/
 
-char* GetOptionVar(unsigned int ID){
+char* GetOptionVar(const unsigned int ID){
 
     struct OPTIONS_DATA *DataBase = &ODataDefault[0];
 
@@ -170,7 +170,7 @@ return(DataBase->Var); }
  * =========================================== *** SetOptionVar() Function *** ========================================== *
  **************************************************************************************************************************/
 
-size_t SetOptionVar(unsigned int ID, char *Var){
+size_t SetOptionVar(const unsigned int ID, char *Var){
 
     struct OPTIONS_DATA *DataBase = &ODataDefault[0];
     size_t               result   = 0;

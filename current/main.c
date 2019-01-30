@@ -79,12 +79,13 @@ void SignalHandler(int signo);
 bool GetSystemInfo(struct utsname *SysInfo);
 
 unsigned int  Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
-int           Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options);
-int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
+int           Main_ShowDebugInfo(const struct utsname *SysInfo, const struct APP_CLOCK *Time, const struct APP_OPTIONS *Options);
+int           Main_ShowOptionsInfo(unsigned int *oIndexes, const unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
-size_t        Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
+size_t        Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, const unsigned int oFlags);
 
-size_t        MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
+int           MainQueue_Create(const bool fDebug);
+size_t        MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, const unsigned int oFlags);
 bool          MainQueue_ShowReadyMessage(struct APP_CLOCK *Time);
 
 /**************************************************************************************************************************
@@ -160,9 +161,7 @@ Exit02: puts(" There is no more connections left... ");
         switch(MainData->Status)                                                                              // <= switch(...)
         {
             case STATUS_QUEUEINIT:              /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-                if( oFlags & OPTION_DEBUG )  printf(" \r\n Message queue initialization... ");
-                if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;                                   // Epoll initialization.
-                if( oFlags & OPTION_DEBUG )  puts(" OK ");
+                ePollHandle = MainQueue_Create(oFlags & OPTION_DEBUG);                                        // Epoll initialization.
                 MainData->Status = STATUS_REGISTER;
                 break;
 
@@ -283,7 +282,7 @@ return(oCurrent); }
  * ====================================== *** Main_ShowDebugInfo() function *** ========================================= *
  **************************************************************************************************************************/
 
-int Main_ShowDebugInfo(struct utsname *SysInfo, struct APP_CLOCK *Time, struct APP_OPTIONS *Options){
+int Main_ShowDebugInfo(const struct utsname *SysInfo, const struct APP_CLOCK *Time, const struct APP_OPTIONS *Options){
 
     int Result = 0;
 
@@ -305,7 +304,7 @@ return(Result); }
  * ===================================== *** Main_ShowOptionsInfo() function *** ======================================== *
  **************************************************************************************************************************/
 
-int Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax){
+int Main_ShowOptionsInfo(unsigned int *oIndexes, const unsigned int oMax){
 
     int Result = 0;
 
@@ -363,7 +362,7 @@ return(OPTION_NULL); }
  * ===================================== *** Main_SetupConnection() function *** ======================================== *
  **************************************************************************************************************************/
 
-size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags){
+size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, const unsigned int oFlags){
 
     size_t nConnections = 0;
 
@@ -407,10 +406,23 @@ size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Ne
 return(nConnections); };
 
 /**************************************************************************************************************************
+ * ======================================= *** MainQueue_Create() function *** ========================================== *
+ **************************************************************************************************************************/
+
+int MainQueue_Create(const bool fDebug){
+
+    int Handle = epoll_create((int)true);                                                                     // Epoll initialization.
+
+    if( fDebug )  printf(" \r\n Message queue initialization... ");
+    if( Handle >= 0 )  if( fDebug )  puts(" OK ");
+
+return(Handle); }
+
+/**************************************************************************************************************************
  * =============================== *** MainQueue_RegisterNewConnections() function *** ================================== *
  **************************************************************************************************************************/
 
-size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, unsigned int oFlags){
+size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, const unsigned int oFlags){
 
     size_t nConnections = 0;
     size_t nRegistered  = 0;
