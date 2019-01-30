@@ -46,7 +46,7 @@
 enum APP_STATUS {
     STATUS_QUEUEINIT,
     STATUS_REGISTER,
-    STATUS_SERVER_READY,
+    STATUS_READY,
     STATUS_SERVER_RECEIVE,
     STATUS_CLIENT_GREETINGS,
     STATUS_CLIENT_SEND,
@@ -84,7 +84,8 @@ int           Main_ShowOptionsInfo(unsigned int *oIndexes, unsigned int oMax);
 unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
 size_t        Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
 
-size_t        MainQueue_RegisterNewConnections(int Handle, struct CONNECT_INFO **NewConnection, unsigned int oFlags);
+size_t        MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, unsigned int oFlags);
+bool          MainQueue_ShowReadyMessage(struct APP_CLOCK *Time);
 
 /**************************************************************************************************************************
  * ============================================== *** main() function *** =============================================== *
@@ -162,16 +163,25 @@ Exit02: puts(" There is no more connections left... ");
                 if( oFlags & OPTION_DEBUG )  printf(" Message queue initialization... ");
                 if( ( ePollHandle = epoll_create((int)true) ) < 0 )  break;                                   // Epoll initialization.
                 if( oFlags & OPTION_DEBUG )  puts(" OK ");
-
                 MainData->Status = STATUS_REGISTER;
                 break;
 
             case STATUS_REGISTER:               /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-                MainQueue_RegisterNewConnections(ePollHandle,&(MainData->Network.iConnection[0]),oFlags);
-
-                MainData->Status++;
+                MainQueue_RegisterNewConnections(ePollHandle,&(MainData->Network),oFlags);
+                MainData->Status = STATUS_READY;
                 break;
+
+            case STATUS_READY   :               /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+                if( !ePollReady )
+                    if( !(oFlags & OPTION_QUIET) )
+                    {
+                        MainQueue_ShowReadyMessage(&(MainData->Time));  break;
+                    };
+                if( oFlags & OPTION_SERVER )  MainData->Status = STATUS_SERVER_RECEIVE;  else
+                                              MainData->Status = STATUS_CLIENT_GREETINGS;
+                break;
+
+            case STATUS_SERVER_RECEIVE:
 
             default:  break;
         };                                                                                                    // <= switch(...)
@@ -397,20 +407,52 @@ size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Ne
 return(nConnections); };
 
 /**************************************************************************************************************************
- * ==================================== *** MainQueue_Registering() function *** ======================================== *
+ * =============================== *** MainQueue_RegisterNewConnections() function *** ================================== *
  **************************************************************************************************************************/
 
-size_t MainQueue_RegisterNewConnections(int Handle, struct CONNECT_INFO **NewConnection, unsigned int oFlags){
+size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, unsigned int oFlags){
 
-    size_t nRegistered = 0;
+    size_t nConnections = 0;
+    size_t nRegistered  = 0;
 
-    while( *NewConnection )
+    if( Net )
     {
-        if( NetworkConfigureRegister(Handle,*NewConnection,(oFlags & OPTION_SERVER)) )  nRegistered++;
+        struct CONNECT_INFO *NewConnection;
+        bool fDebug = (oFlags & OPTION_DEBUG);
 
-        NewConnection++;
+        if( fDebug )  puts(" \r\n Registering sockets: ");
+
+        while( NewConnection=(Net->iConnection[nConnections]) )
+        {
+            switch( NetworkConfigureRegister(Handle,NewConnection,(oFlags & OPTION_SERVER)) )
+            {
+                case false:
+                             break;
+
+                case true:   Net->nConnections = (nConnections++);
+                             Net->nRegistered  = (nRegistered++);
+                             break;
+            };
+            if( fDebug )  printf("    + %u.[%d] - (%d) %s; \r\n",nConnections,(NewConnection->Socket.Handle),
+                                                                              (NewConnection->Socket.ErrCode),
+                                                                             &(NewConnection->Socket.ErrMsg[0]));
+        };
     };
 return(nRegistered); }
+
+/**************************************************************************************************************************
+ * =============================== *** MainQueue_RegisterNewConnections() function *** ================================== *
+ **************************************************************************************************************************/
+
+bool MainQueue_ShowReadyMessage(struct APP_CLOCK *Time){
+
+    bool Result = false;
+
+    if( Time )
+    {
+
+    };
+return(Result); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
