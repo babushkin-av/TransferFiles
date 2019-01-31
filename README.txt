@@ -1,5 +1,5 @@
-                   *** TransferFiles ***
-----------------------------------------------------------------------
+                        *** TransferFiles ***
+-------------------------------------------------------------------------
 
   * Short description:  Easy file sharing between unprivileged users.
   * Author:             Babushkin Alexander.
@@ -7,9 +7,8 @@
   * Language:           C/C++.
   * Platform:           x86/x86-64.
   * OS family:          Linux /(Windows support will be added later).
-  * Status:             version 0.1 (not done yet...)
-----------------------------------------------------------------------
+  * Status:             Active development (version 0.1 not done yet...)
+-------------------------------------------------------------------------
 
-For more info see:
-    TransferFiles/docs/index.html
+For more info see:      TransferFiles/docs/index.html
 

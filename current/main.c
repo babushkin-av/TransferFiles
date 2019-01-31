@@ -78,11 +78,11 @@ bool SignalHandlerInit(void);
 void SignalHandler(int signo);
 bool GetSystemInfo(struct utsname *SysInfo);
 
-unsigned int  Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
-int           Main_ShowDebugInfo(const struct utsname *SysInfo, const struct APP_CLOCK *Time, const struct APP_OPTIONS *Options);
-int           Main_ShowOptionsInfo(unsigned int *oIndexes, const unsigned int oMax);
-unsigned int  Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options);
-size_t        Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, const unsigned int oFlags);
+unsigned int      Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
+int               Main_ShowDebugInfo(const struct utsname *SysInfo, const struct APP_CLOCK *Time, const struct APP_OPTIONS *Options);
+int               Main_ShowOptionsInfo(unsigned int *oIndexes, const unsigned int oMax);
+struct addrinfo*  Main_Configuring(struct APP_OPTIONS *Options);
+size_t            Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, struct APP_OPTIONS *Options);
 
 int           MainQueue_Create(const bool fDebug);
 size_t        MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, const unsigned int oFlags);
@@ -100,7 +100,6 @@ int main(int argc, char *argv[], char *env[]){
 
     if( MainData = (struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA)) )
         if( MainData->Options.oIndexes = (unsigned int*)calloc(GetOptionIndex(oFlags),sizeof(unsigned int)) )
-            if( MainData->Network.iConnection[0] = (struct CONNECT_INFO*)calloc(1,sizeof(struct CONNECT_INFO)) )
                 oFlags = OPTION_NULL;
 
     if( oFlags )  error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
@@ -128,25 +127,16 @@ int main(int argc, char *argv[], char *env[]){
         Main_ShowDebugInfo(&(MainData->SysInfo),&(MainData->Time),&(MainData->Options));                      // Show some debug info.
     };
     free(MainData->Options.oIndexes);
-
-    if( !( oFlags = Main_Configuring((MainData->Network.iConnection[0]),&(MainData->Options)) ) )
-        exit(EXIT_FAILURE);
-
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Configuring the network connections ----------------------------------------------------------------- */
-    {
-        struct addrinfo *Handle = NetworkConfigureInit((MainData->Options.rHost),
-                                                       (MainData->Options.rPort),
-                                                       (MainData->Network.iConnection[0]));
 
-        MainData->Network.nConnections = Main_SetupNewConnections(Handle,&(MainData->Network),oFlags);
-
-        if( Handle )  freeaddrinfo(Handle);
-    };
+    MainData->Network.nConnections = Main_SetupNewConnections(Main_Configuring(&(MainData->Options)),
+                                                                               &(MainData->Network),
+                                                                               &(MainData->Options));         // <= Fixed the bug!
     if( !(MainData->Network.nConnections) )
     {
-Exit02: puts(" There is no more connections left... ");
+Exit02: puts("\r\n There is no more connections left... \r\n");
         MainData->Options.oFlags |= OPTION_LAST;
     };
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -318,58 +308,63 @@ return(Result); }
  * ===================================== *** Main_ShowOptionsInfo() function *** ======================================== *
  **************************************************************************************************************************/
 
-unsigned int Main_Configuring(struct CONNECT_INFO *NewConnection, struct APP_OPTIONS *Options){
+struct addrinfo* Main_Configuring(struct APP_OPTIONS *Options){
 
-    if( (NewConnection)&&(Options) )
+    static struct addrinfo *Handle;
+    static struct addrinfo  AddrInfo;
+
+    if( Options )
     {
-        unsigned int oFlags = (Options->oFlags);
+        AddrInfo.ai_protocol = IPPROTO_IP;                                                                    // Specifing the protocol and
+        AddrInfo.ai_socktype = SOCK_STREAM;                                                                   // the preferred socket type.
 
-        NewConnection->AddrInfo.ai_protocol = IPPROTO_TCP;                                                    // Specifing the protocol and
-        NewConnection->AddrInfo.ai_socktype = SOCK_STREAM;                                                    // the preferred socket type.
+        unsigned int oFlags = (Options->oFlags);
 
         switch( oFlags & (OPTION_IPV4|OPTION_IPV6) )
         {
-            case OPTION_IPV4:    NewConnection->AddrInfo.ai_family = AF_INET;  break;                         // - the case for a "IPv4" option;
-            case OPTION_IPV6:    NewConnection->AddrInfo.ai_family = AF_INET6;  break;                        // - the case for a "IPv6" option;
-            default:             NewConnection->AddrInfo.ai_family = AF_UNSPEC;  break;                       // - the case for a default IP-protocol;
+            case OPTION_IPV4:    AddrInfo.ai_family = AF_INET;  break;                                        // - the case for a "IPv4" option;
+            case OPTION_IPV6:    AddrInfo.ai_family = AF_INET6;  break;                                       // - the case for a "IPv6" option;
+            default:             AddrInfo.ai_family = AF_UNSPEC;  break;                                      // - the case for a default IP-protocol;
         };
         switch( oFlags & (OPTION_SERVER|OPTION_CLIENT) )
         {
             case 0:              oFlags = (oFlags|OPTION_SERVER);
 
-            case OPTION_SERVER:  NewConnection->AddrInfo.ai_flags|= AI_PASSIVE;                               // - the case for a "server" option;
+            case OPTION_SERVER:  AddrInfo.ai_flags|= AI_PASSIVE;                                              // - the case for a "server" option;
                                  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a server: ");
                                  Options->rHost = GetOptionVar(OPTION_SERVER);
                                  break;
 
-            case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client: ");          // - the case for a "client" option;
+            case OPTION_CLIENT:  if( !(oFlags & OPTION_QUIET) )  puts("\r\n Creating a client: ");            // - the case for a "client" option;
                                  Options->rHost = GetOptionVar(OPTION_CLIENT);
                                  break;
 
             default:             puts("\r\n Error: ambigous options. Can`t create client and server at the same time. \r\n");
-                                 return(OPTION_NULL);                                                         // - detecting errors.
+                                 return(NULL);                                                                // - detecting errors.
         };
         Options->oFlags = oFlags;
 
         if( oFlags & OPTION_PORT )  Options->rPort = GetOptionVar(OPTION_PORT);                               //
         if( !(Options->rPort) )     Options->rPort = "45678\0";                                               // Default port.
 
-        return(oFlags);
+        int gaiResult = getaddrinfo((Options->rHost),(Options->rPort),&AddrInfo,&Handle);
+        if( gaiResult )  printf("    - Error: (%d) %s.\r\n",gaiResult,gai_strerror(gaiResult));
     };
-return(OPTION_NULL); }
+return(Handle); }
 
 /**************************************************************************************************************************
  * ===================================== *** Main_SetupConnection() function *** ======================================== *
  **************************************************************************************************************************/
 
-size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, const unsigned int oFlags){
+size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Net, struct APP_OPTIONS *Options){
 
     size_t nConnections = 0;
 
     if( (Handle)&&(Net) )
     {
-        bool fServer = (oFlags & OPTION_SERVER);
-        bool fQuiet  = (oFlags & OPTION_QUIET);
+        unsigned int  oFlags  = (Options->oFlags);
+        bool          fServer = (oFlags & OPTION_SERVER);
+        bool          fQuiet  = (oFlags & OPTION_QUIET);
 
         do
         {   struct CONNECT_INFO *NewConnection = (Net->iConnection[nConnections]);
@@ -391,17 +386,24 @@ size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Ne
                                           &(NewConnection->HostInfo.PortNum[0]));
                     fflush(stdout);
                 };
-                switch( NetworkConfigureSocket(NewConnection,fServer) )
+
+                int Result = NetworkConfigureSocket(NewConnection,fServer);
+
+                if( !fQuiet )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
+                                                      &(NewConnection->Socket.ErrMsg[0]));
+                switch( Result )
                 {
                     case CONNECTION_ACTIVE:    Net->nActive++;
-                    case CONNECTION_LISTENER:  Net->nConnections = (nConnections++);
-                    default:                   break;
+                    case CONNECTION_LISTENER:  Net->nConnections = (nConnections++);  break;
+                    default:                   NetworkConfigureClose(-1,NewConnection);
+                                               free(NewConnection);
+                                               Net->iConnection[nConnections] = NewConnection = NULL;
             };  };
-            if( !fQuiet )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
-                                                  &(NewConnection->Socket.ErrMsg[0]));
             if( (!fServer)&&(nConnections) )  break;
 
         }while( (Handle=Handle->ai_next)&&(nConnections<NETWORK_MAX_CONN) );
+
+    freeaddrinfo(Handle);
     };
 return(nConnections); };
 
