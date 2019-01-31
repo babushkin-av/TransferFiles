@@ -41,7 +41,7 @@
  **************************************************************************************************************************/
 
 #define NETWORK_MAX_CONN       (4096)
-#define NETWORK_DATA_BUF       (16384)
+#define NETWORK_DATA_BUF       (4096)
 #define NETWORK_PORT_NUM       (40678 + IPPORT_USERRESERVED)
 
 enum CONN_STAT {
@@ -76,8 +76,8 @@ struct HOST_INFO {
 
 struct DATA_BUFF {
     size_t                     nBytes;
-    size_t                     BytesSend;
-    size_t                     BytesRecv;
+    ssize_t                    BytesSend;
+    ssize_t                    BytesRecv;
     void                      *FileInfo;
     uint8_t                    Buffer[NETWORK_DATA_BUF];
 };

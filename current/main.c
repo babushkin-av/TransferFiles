@@ -82,7 +82,7 @@ bool GetSystemInfo(struct utsname *SysInfo);
 /**************************************************************************************************************************
  *      The following section presents the following functions:  "Main_xxxx", and "MainQueue_xxxx".  These functions are  *
  * presented for convenience and better understanding of the program structure.  Most of them are called only once and    *
- * have no meaning outside the main module.  Their arguments also do not have special importance.                         *
+ * have no meaning outside this module.  Their arguments also do not have special importance.                             *
  **************************************************************************************************************************/
 
 unsigned int      Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
@@ -167,7 +167,7 @@ Exit02: puts("\r\n There is no more connections left... \r\n");
                 MainData->Status = STATUS_READY;
                 break;
 
-            case STATUS_READY   :               /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+            case STATUS_READY:                  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
                 if( !ePollReady )
                     if( !(oFlags & OPTION_QUIET) )
                     {
@@ -177,9 +177,29 @@ Exit02: puts("\r\n There is no more connections left... \r\n");
                                               MainData->Status = STATUS_CLIENT_GREETINGS;
                 break;
 
-            case STATUS_SERVER_RECEIVE:
+            case STATUS_SERVER_RECEIVE:         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+                if( ePollReady )
+                {
+                       int               Event =                       ePollEvent.events;
+                    struct CONNECT_INFO *Input = (struct CONNECT_INFO*)ePollEvent.data.ptr;
 
-            default:  break;
+                    if( Event & (EPOLLERR|EPOLLHUP) )  goto Dummy00;
+                    if( Event & (EPOLLIN) )
+                    {
+                        switch( (Input->Status)&(INT_MAX) )
+                        {
+                            case CONNECTION_LISTENER:
+                            case CONNECTION_ACTIVE:
+                            default:
+                                break;
+                        };
+                    };
+                };
+                break;
+
+            default:
+Dummy00:
+                break;
         };                                                                                                    // <= switch(...)
         if( (ePollReady = epoll_wait(ePollHandle,&ePollEvent,1,1000)) < 0 )  break;                           // <= epoll_wait(...) - waiting for internet streams.
     };                                                                                                        // <= while(...)
@@ -390,10 +410,9 @@ size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Ne
             {
                 if( !fQuiet )
                 {   printf(" [ % 8s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),
-                                          &(NewConnection->HostInfo.PortNum[0]));
+                                            &(NewConnection->HostInfo.PortNum[0]));
                     fflush(stdout);
                 };
-
                 int Result = NetworkConfigureSocket(NewConnection,fServer);
 
                 if( !fQuiet )  printf("- (%d) %s;\r\n",(NewConnection->Socket.ErrCode),
@@ -401,7 +420,8 @@ size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Ne
                 switch( Result )
                 {
                     case CONNECTION_ACTIVE:    Net->nActive++;
-                    case CONNECTION_LISTENER:  Net->nConnections = (nConnections++);  break;
+                    case CONNECTION_LISTENER:  Net->nConnections = (nConnections++);
+                                               break;
                     default:                   NetworkConfigureClose(-1,NewConnection);
                                                free(NewConnection);
                                                Net->iConnection[nConnections] = NewConnection = NULL;
