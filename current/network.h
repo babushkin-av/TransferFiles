@@ -107,7 +107,7 @@ extern "С" {
 #endif
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-struct addrinfo* NetworkConfigureInit(char *Host, char *Port, struct CONNECT_INFO *iConn);
+struct addrinfo* NetworkConfigureInit(const char *Host, const char *Port, struct CONNECT_INFO *iConn);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 

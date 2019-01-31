@@ -34,7 +34,7 @@
  * ======================================= *** NetworkConfigureInit() Function *** ====================================== *
  **************************************************************************************************************************/
 
-struct addrinfo* NetworkConfigureInit(char *Host, char *Port, struct CONNECT_INFO *iConn){
+struct addrinfo* NetworkConfigureInit(const char *Host, const char *Port, struct CONNECT_INFO *iConn){
 
     static struct addrinfo *resTmp = NULL;
 
@@ -51,24 +51,43 @@ return(resTmp); }
 
 bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
 
-    int gaiResult;
-    struct HOST_INFO *WorkingHost = &(iConn->HostInfo);
+#   define     nFlagsMax            (2)
+    const int  Flags[nFlagsMax] = { (NI_NUMERICHOST|NI_NUMERICSERV),(NI_NAMEREQD) };
 
-    if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(WorkingHost->HostNum[0]),APP_NAME_MAX,&(WorkingHost->PortNum[0]),NI_MAXSERV,NI_NUMERICHOST|NI_NUMERICSERV) )
-    {   strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);  return(false);   };
+    int  Result = 0;
 
-    if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(WorkingHost->HostName[0]),APP_NAME_MAX,&(WorkingHost->PortName[0]),NI_MAXSERV,NI_NAMEREQD) )
+    if( (Handle)&&(iConn) )
     {
-        strcpy(&(WorkingHost->HostName[0]),&(WorkingHost->HostNum[0]));
-        strcpy(&(WorkingHost->PortName[0]),&(WorkingHost->PortNum[0]));
-    };
-    if( (void*)(Handle) != (void*)&(iConn->AddrInfo) )  memcpy(&(iConn->AddrInfo),Handle,sizeof(struct addrinfo));
-    if( (void*)(Handle->ai_addr) != (void*)&(iConn->AddrSpace.Raw) )  memcpy(&(iConn->AddrSpace.Raw),(Handle->ai_addr),(Handle->ai_addrlen));
+        int gaiResult = 0;
 
-    iConn->AddrInfo.ai_addr = &(iConn->AddrSpace.Raw);
-    iConn->AddrInfo.ai_next = NULL;
+        do
+        {   struct HOST_INFO *Host  = &(iConn->HostInfo);
 
-return(true); }
+            if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(Host->HostName[0]),APP_NAME_MAX,&(Host->PortName[0]),NI_MAXSERV,Flags[Result]) )
+                break;
+            if( !Result )
+            {
+                strcpy(&(Host->HostNum[0]),&(Host->HostName[0]));
+                strcpy(&(Host->PortNum[0]),&(Host->PortName[0]));
+            };
+        }while( (++Result) < nFlagsMax );
+
+        strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);
+
+        if( Result )
+        {
+            if( (void*)(Handle) != (void*)&(iConn->AddrInfo) )
+                memcpy(&(iConn->AddrInfo),Handle,sizeof(struct addrinfo));
+
+            if( (void*)(Handle->ai_addr) != (void*)&(iConn->AddrSpace.Raw) )
+                memcpy(&(iConn->AddrSpace.Raw),(Handle->ai_addr),(Handle->ai_addrlen));
+
+            iConn->AddrInfo.ai_addr = &(iConn->AddrSpace.Raw);
+            iConn->AddrInfo.ai_next = NULL;
+    };  };
+#   undef     nFlagsMax
+
+return((bool)Result); }
 
 /**************************************************************************************************************************
  * ===================================== *** NetworkConfigureSocket() Function *** ====================================== *

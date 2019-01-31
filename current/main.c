@@ -78,6 +78,13 @@ bool SignalHandlerInit(void);
 void SignalHandler(int signo);
 bool GetSystemInfo(struct utsname *SysInfo);
 
+
+/**************************************************************************************************************************
+ *      The following section presents the following functions:  "Main_xxxx", and "MainQueue_xxxx".  These functions are  *
+ * presented for convenience and better understanding of the program structure.  Most of them are called only once and    *
+ * have no meaning outside the main module.  Their arguments also do not have special importance.                         *
+ **************************************************************************************************************************/
+
 unsigned int      Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV);
 int               Main_ShowDebugInfo(const struct utsname *SysInfo, const struct APP_CLOCK *Time, const struct APP_OPTIONS *Options);
 int               Main_ShowOptionsInfo(unsigned int *oIndexes, const unsigned int oMax);
@@ -382,14 +389,14 @@ size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Ne
             if( NetworkConfigureNext(Handle,NewConnection) )
             {
                 if( !fQuiet )
-                {   printf(" [ %s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),
+                {   printf(" [ % 8s @%s ] ",&(NewConnection->HostInfo.HostNum[0]),
                                           &(NewConnection->HostInfo.PortNum[0]));
                     fflush(stdout);
                 };
 
                 int Result = NetworkConfigureSocket(NewConnection,fServer);
 
-                if( !fQuiet )  printf("- (%d) %s.\r\n",(NewConnection->Socket.ErrCode),
+                if( !fQuiet )  printf("- (%d) %s;\r\n",(NewConnection->Socket.ErrCode),
                                                       &(NewConnection->Socket.ErrMsg[0]));
                 switch( Result )
                 {
@@ -431,6 +438,7 @@ size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, co
 
     if( Net )
     {
+        bool fQuiet = (oFlags & OPTION_QUIET);
         bool fDebug = (oFlags & OPTION_DEBUG);
 
         if( fDebug )  puts(" \r\n Registering sockets: ");
@@ -452,7 +460,7 @@ size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, co
             };
             nConnections++;
         };
-        if( fDebug )  puts(" ");
+        if( !fQuiet )  puts(" ");
         Net->nConnections = nConnections;
         Net->nRegistered  = nRegistered;
     };
@@ -469,7 +477,7 @@ bool MainQueue_ShowReadyMessage(struct APP_CLOCK *Time){
     if( Time )
         if( GetTimeDiff(Time,"%M:%S") )
         {
-            printf(" Waiting for connection: %s  \r",&(Time->String));  fflush(stdout);
+            printf(" Waiting for connection: %s ... \r",&(Time->String));  fflush(stdout);
             Result = true;
         };
 return(Result); }
