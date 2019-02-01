@@ -54,16 +54,15 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
 #   define     nFlagsMax            (2)
     const int  Flags[nFlagsMax] = { (NI_NUMERICHOST|NI_NUMERICSERV),(NI_NAMEREQD) };
 
-    int  Result = 0;
+    int     Result = 0;
+    int  gaiResult = 0;
 
     if( (Handle)&&(iConn) )
     {
-        int gaiResult = 0;
+        struct HOST_INFO *Host  = &(iConn->HostInfo);
 
         do
-        {   struct HOST_INFO *Host  = &(iConn->HostInfo);
-
-            if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(Host->HostName[0]),APP_NAME_MAX,&(Host->PortName[0]),NI_MAXSERV,Flags[Result]) )
+        {   if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(Host->HostName[0]),APP_NAME_MAX,&(Host->PortName[0]),NI_MAXSERV,Flags[Result]) )
                 break;
             if( !Result )
             {
@@ -76,6 +75,12 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
 
         if( Result )
         {
+            struct protoent *ProtocolName = getprotobynumber(Handle->ai_protocol);
+            if( ProtocolName )
+            {
+                strcpy(&(Host->Protocol[0]),(ProtocolName->p_name));
+                endprotoent();
+            };
             if( (void*)(Handle) != (void*)&(iConn->AddrInfo) )
                 memcpy(&(iConn->AddrInfo),Handle,sizeof(struct addrinfo));
 
@@ -118,10 +123,13 @@ int NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
         strerror_r((iConn->Socket.ErrCode=errno),&(iConn->Socket.ErrMsg[0]),APP_NAME_MAX);
 
         switch(iConn->Status)
-        {   case CONNECTION_NULL:  close(hSock);  hSock = -1;  break;
+        {
+            case CONNECTION_NULL:  NetworkConfigureClose((hSock=-1),iConn);
+                                   break;
             default:               iConn->Socket.Flags  = fcntl(hSock,F_GETFD);
                                    iConn->Socket.Status = fcntl(hSock,F_GETFL);
                                    iConn->Socket.Start  = time(NULL);
+                                   break;
         };
         iConn->Socket.Handle = hSock;
         Result               = (iConn->Status);
@@ -186,26 +194,35 @@ return(Result); }
  * ====================================== *** NetworkConfigureClose() Function *** ====================================== *
  **************************************************************************************************************************/
 
-bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *iConn){
+bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *OldConnection){
+
+    static struct epoll_event  Event;                                                                         //
+    static struct linger       Option;                                                                        // This structure is used for SO_LINGER option.
 
     bool Result = false;
-    struct epoll_event Event;                                                                //
 
-    if( iConn )
+    if( OldConnection )
     {
-        int Status = iConn->Status;
-        int Handle = iConn->Socket.Handle;
+        int Status = OldConnection->Status;
+        int Handle = OldConnection->Socket.Handle;
 
-        if( Status & CONNECTION_REGISTERED )
+        if( (EpollHandle >= 0)&&(Status & CONNECTION_REGISTERED) )
         {
-            Event.data.ptr = iConn;
+            Event.data.ptr = OldConnection;
             Event.events   = EPOLLERR;
 
             epoll_ctl(EpollHandle,EPOLL_CTL_DEL,Handle,&Event);
         };
-        if( Status )  if( Handle >= 0 )  if( !close(Handle) )  Result = true;
+        if( Handle >= 0 )
+        {
+            Option.l_onoff  = 0;                                                                              // If nonzero, close()/shutdown() blocks until the data are transmitted;
+            Option.l_linger = 1;                                                                              // this specifies the timeout period, in seconds.
 
-        memset(iConn,0,sizeof(struct CONNECT_INFO));
+            setsockopt(Handle,SOL_SOCKET,SO_LINGER,&Option,sizeof(struct linger));                            // This function is used to set the socket option.
+            shutdown(Handle,SHUT_RDWR);
+            OldConnection->Socket.Handle = Handle = -1;
+        };
+        Result = true;
     };
 return(Result); }
 

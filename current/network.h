@@ -25,24 +25,22 @@
  * =============================================== *** Header Files *** ================================================= *
  **************************************************************************************************************************/
 
-#include "base.h"
+#include "base.h"                                                              // Basic definitions.
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <fcntl.h>                                                             // Used by the fcntl().
+#include <netinet/in.h>                                                        // Internet domain address structures and functions.
+#include <netinet/tcp.h>                                                       // Socket option macro definitions, TCP headers, enums, etc.
+#include <sys/socket.h>                                                        // Structures and functions used for socket API.
+#include <sys/epoll.h>                                                         // Structures and functions used for epoll API.
+#include <netdb.h>                                                             // Used for DNS hostname lookup.
 
 /**************************************************************************************************************************
  * ============================================== *** Global Variables *** ============================================== *
  **************************************************************************************************************************/
 
-#define NETWORK_MAX_CONN       (4096)
-#define NETWORK_DATA_BUF       (4096)
-#define NETWORK_PORT_NUM       (40678 + IPPORT_USERRESERVED)
+#define NETWORK_MAX_CONN       (4096)                                          //
+#define NETWORK_DATA_BUF       (4096)                                          //
+#define NETWORK_PORT_NUM       (40678 + IPPORT_USERRESERVED)                   //
 
 enum CONN_STAT {
     CONNECTION_NULL,
@@ -92,7 +90,7 @@ struct CONNECT_INFO {
 };
 
 struct NETWORK_DATA {
-    size_t                     nConnections;                         // All connections;
+    size_t                     nConnections;                                                                  // All connections;
     size_t                     nRegistered;
     size_t                     nActive;
     struct CONNECT_INFO       *iConnection[NETWORK_MAX_CONN];
@@ -127,7 +125,7 @@ bool NetworkConfigureRegister(int Handle, struct CONNECT_INFO *NewConnection, bo
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *iConn);
+bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *OldConnection);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 #ifdef __cplusplus

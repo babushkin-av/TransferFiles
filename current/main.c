@@ -33,6 +33,7 @@
 #include "network.h"
 
 #include <fcntl.h>
+#include <locale.h>
 #include <unistd.h>
 #include <signal.h>
 #include <error.h>
@@ -114,6 +115,10 @@ int main(int argc, char *argv[], char *env[]){
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     /* Initializing "MainData" structures and flags -------------------------------------------------------- */
+
+    setlocale(LC_CTYPE,"en");
+    setlocale(LC_COLLATE,"en");
+    setlocale(LC_MESSAGES,"en");
 
     if( !SignalHandlerInit() )                                                                                // Initializating signal handler.
         error(errno,errno," Error! Can`t setup signal handler!  (%d) ",errno);
@@ -469,9 +474,10 @@ size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, co
         {
             bool Result = NetworkConfigureRegister(Handle,NewConnection,(oFlags & OPTION_SERVER));
 
-            if( fDebug )  printf("    +% 2u.[%d] - (%d) %s; \r\n",nConnections,(NewConnection->Socket.Handle),
-                                                                               (NewConnection->Socket.ErrCode),
-                                                                              &(NewConnection->Socket.ErrMsg[0]));
+            if( fDebug )  printf("    +% 2u.[%s:%d] - (%d) %s; \r\n",nConnections,&(NewConnection->HostInfo.Protocol[0]),
+                                                                                   (NewConnection->Socket.Handle),
+                                                                                   (NewConnection->Socket.ErrCode),
+                                                                                  &(NewConnection->Socket.ErrMsg[0]));
             if( Result )  nRegistered++;  else
             {
                 NetworkConfigureClose(Handle,NewConnection);
