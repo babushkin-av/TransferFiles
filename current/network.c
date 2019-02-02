@@ -176,12 +176,13 @@ return(Result); }
 bool NetworkConfigureRegister(int Handle, struct CONNECT_INFO *NewConnection, bool fServer){
 
     bool Result = false;
-    struct epoll_event Event;                                                                //
 
     if( NewConnection )
     {
-        Event.data.ptr = NewConnection;
-        if( fServer )  Event.events = EPOLLIN;  else  Event.events = EPOLLOUT;
+        struct epoll_event Event = {   .data.ptr = NewConnection, /* */
+                                       .events   = EPOLLOUT       /* */ };
+
+        if( fServer )  Event.events = EPOLLIN;
 
         if( epoll_ctl(Handle,EPOLL_CTL_ADD,(NewConnection->Socket.Handle),&Event) )
             strerror_r((NewConnection->Socket.ErrCode=errno),&(NewConnection->Socket.ErrMsg[0]),APP_NAME_MAX);  else
@@ -191,32 +192,44 @@ bool NetworkConfigureRegister(int Handle, struct CONNECT_INFO *NewConnection, bo
 return(Result); }
 
 /**************************************************************************************************************************
- * ====================================== *** NetworkConfigureClose() Function *** ====================================== *
+ * ==================================== *** NetworkConfigureRegister() Function *** ===================================== *
  **************************************************************************************************************************/
 
-bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *OldConnection){
-
-    static struct epoll_event  Event;                                                                         //
-    static struct linger       Option;                                                                        // This structure is used for SO_LINGER option.
+bool NetworkConfigureUnregister(int Handle, struct CONNECT_INFO *OldConnection){
 
     bool Result = false;
 
     if( OldConnection )
     {
-        int Status = OldConnection->Status;
-        int Handle = OldConnection->Socket.Handle;
+        struct epoll_event Event = {   .data.ptr = OldConnection, /* */
+                                       .events   = EPOLLERR       /* */ };
 
-        if( (EpollHandle >= 0)&&(Status & CONNECTION_REGISTERED) )
+        if( epoll_ctl(Handle,EPOLL_CTL_DEL,(OldConnection->Socket.Handle),&Event) )
+            strerror_r((OldConnection->Socket.ErrCode=errno),&(OldConnection->Socket.ErrMsg[0]),APP_NAME_MAX);  else
         {
-            Event.data.ptr = OldConnection;
-            Event.events   = EPOLLERR;
+            OldConnection->Status&= (~CONNECTION_REGISTERED);  Result = true;
+    };  };
+return(Result); }
 
-            epoll_ctl(EpollHandle,EPOLL_CTL_DEL,Handle,&Event);
-        };
+/**************************************************************************************************************************
+ * ====================================== *** NetworkConfigureClose() Function *** ====================================== *
+ **************************************************************************************************************************/
+
+bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *OldConnection){
+
+    bool Result = false;
+
+    if( OldConnection )
+    {
+        if( (OldConnection->Status) & CONNECTION_REGISTERED )
+            NetworkConfigureUnregister(EpollHandle,OldConnection);
+
+        int Handle = (OldConnection->Socket.Handle);
+
         if( Handle >= 0 )
-        {
-            Option.l_onoff  = 0;                                                                              // If nonzero, close()/shutdown() blocks until the data are transmitted;
-            Option.l_linger = 1;                                                                              // this specifies the timeout period, in seconds.
+        {                                                                                                     // This structure is used for SO_LINGER option.
+            const struct linger Option = {   .l_onoff  = 0, /* blocking bit */
+                                             .l_linger = 1  /* timeout period, in seconds */ };
 
             setsockopt(Handle,SOL_SOCKET,SO_LINGER,&Option,sizeof(struct linger));                            // This function is used to set the socket option.
             shutdown(Handle,SHUT_RDWR);

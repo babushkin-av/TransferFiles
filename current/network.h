@@ -125,6 +125,10 @@ bool NetworkConfigureRegister(int Handle, struct CONNECT_INFO *NewConnection, bo
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
+bool NetworkConfigureUnregister(int Handle, struct CONNECT_INFO *OldConnection);
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
 bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *OldConnection);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
