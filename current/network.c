@@ -122,14 +122,11 @@ int NetworkConfigureSocket(struct CONNECT_INFO *iConn, bool fServer){
             };
         strerror_r((iConn->Socket.ErrCode=errno),&(iConn->Socket.ErrMsg[0]),APP_NAME_MAX);
 
-        switch(iConn->Status)
+        if( (iConn->Status) )
         {
-            case CONNECTION_NULL:  NetworkConfigureClose((hSock=-1),iConn);
-                                   break;
-            default:               iConn->Socket.Flags  = fcntl(hSock,F_GETFD);
-                                   iConn->Socket.Status = fcntl(hSock,F_GETFL);
-                                   iConn->Socket.Start  = time(NULL);
-                                   break;
+            iConn->Socket.Flags  = fcntl(hSock,F_GETFD);
+            iConn->Socket.Status = fcntl(hSock,F_GETFL);
+            iConn->Socket.Start  = time(NULL);
         };
         iConn->Socket.Handle = hSock;
         Result               = (iConn->Status);
@@ -207,7 +204,7 @@ bool NetworkConfigureUnregister(int Handle, struct CONNECT_INFO *OldConnection){
         if( epoll_ctl(Handle,EPOLL_CTL_DEL,(OldConnection->Socket.Handle),&Event) )
             strerror_r((OldConnection->Socket.ErrCode=errno),&(OldConnection->Socket.ErrMsg[0]),APP_NAME_MAX);  else
         {
-            OldConnection->Status&= (~CONNECTION_REGISTERED);  Result = true;
+            OldConnection->Status&= CONNECTION_REGISTERMASK;  Result = true;
     };  };
 return(Result); }
 
@@ -227,13 +224,40 @@ bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *OldConnection){
         int Handle = (OldConnection->Socket.Handle);
 
         if( Handle >= 0 )
-        {                                                                                                     // This structure is used for SO_LINGER option.
-            const struct linger Option = {   .l_onoff  = 0, /* blocking bit */
+        {
+            close(Handle);
+            strerror_r((OldConnection->Socket.ErrCode=errno),&(OldConnection->Socket.ErrMsg[0]),APP_NAME_MAX);
+            OldConnection->Socket.Handle = Handle = -1;
+        };
+        Result = true;
+    };
+return(Result); }
+
+/**************************************************************************************************************************
+ * ===================================== *** NetworkConfigureDestroy() Function *** ===================================== *
+ **************************************************************************************************************************/
+
+bool NetworkConfigureDestroy(int EpollHandle, struct CONNECT_INFO *OldConnection){
+
+    bool Result = false;
+
+    if( OldConnection )
+    {
+        if( (OldConnection->Status) & CONNECTION_REGISTERED )
+            NetworkConfigureUnregister(EpollHandle,OldConnection);
+
+        int Handle = (OldConnection->Socket.Handle);
+
+        if( Handle >= 0 )
+        {
+            const struct linger Option = {   .l_onoff  = 0, /* blocking bit */                                // This structure is used for SO_LINGER option.
                                              .l_linger = 1  /* timeout period, in seconds */ };
 
             setsockopt(Handle,SOL_SOCKET,SO_LINGER,&Option,sizeof(struct linger));                            // This function is used to set the socket option.
-            shutdown(Handle,SHUT_RDWR);
-            OldConnection->Socket.Handle = Handle = -1;
+            close(Handle);
+
+            memset(OldConnection,0,sizeof(struct CONNECT_INFO));
+            free(OldConnection);
         };
         Result = true;
     };

@@ -28,6 +28,7 @@
 #include "base.h"                                                              // Basic definitions.
 
 #include <fcntl.h>                                                             // Used by the fcntl().
+#include <unistd.h>                                                            // Used by the close().
 #include <netinet/in.h>                                                        // Internet domain address structures and functions.
 #include <netinet/tcp.h>                                                       // Socket option macro definitions, TCP headers, enums, etc.
 #include <sys/socket.h>                                                        // Structures and functions used for socket API.
@@ -46,7 +47,8 @@ enum CONN_STAT {
     CONNECTION_NULL,
     CONNECTION_LISTENER,
     CONNECTION_ACTIVE,
-    CONNECTION_REGISTERED = (INT_MIN)
+    CONNECTION_REGISTERED   = (INT_MIN),
+    CONNECTION_REGISTERMASK = (INT_MAX)
 };
 
 struct SOCKET_INFO {
@@ -130,6 +132,10 @@ bool NetworkConfigureUnregister(int Handle, struct CONNECT_INFO *OldConnection);
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
 bool NetworkConfigureClose(int EpollHandle, struct CONNECT_INFO *OldConnection);
+
+/* ---------------------------------------------------------------------------------------------------------------------- */
+
+bool NetworkConfigureDestroy(int EpollHandle, struct CONNECT_INFO *OldConnection);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 #ifdef __cplusplus

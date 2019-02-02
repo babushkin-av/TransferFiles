@@ -191,7 +191,7 @@ Exit02: puts("\r\n There is no more connections left... \r\n");
                     if( Event & (EPOLLERR|EPOLLHUP) )  goto Dummy00;
                     if( Event & (EPOLLIN) )
                     {
-                        switch( (Input->Status)&(INT_MAX) )
+                        switch( (Input->Status) & CONNECTION_REGISTERMASK )
                         {
                             case CONNECTION_LISTENER:
                             case CONNECTION_ACTIVE:
@@ -216,7 +216,7 @@ Dummy00:
     for(struct CONNECT_INFO *OldConn=(MainData->Network.iConnection[0]),
                             *MaxConn=(MainData->Network.iConnection[NETWORK_MAX_CONN]); OldConn<MaxConn; OldConn++)
         if( OldConn )
-        {   NetworkConfigureClose(-1,OldConn);  free(OldConn);   };
+            NetworkConfigureDestroy(-1,OldConn);
 
     memset(MainData,0,sizeof(struct MAIN_DATA));
     free(MainData);
@@ -427,8 +427,7 @@ size_t Main_SetupNewConnections(struct addrinfo *Handle, struct NETWORK_DATA *Ne
                     case CONNECTION_ACTIVE:    Net->nActive++;
                     case CONNECTION_LISTENER:  Net->nConnections = (nConnections++);
                                                break;
-                    default:                   NetworkConfigureClose(-1,NewConnection);
-                                               free(NewConnection);
+                    default:                   NetworkConfigureDestroy(-1,NewConnection);
                                                Net->iConnection[nConnections] = NewConnection = NULL;
             };  };
             if( (!fServer)&&(nConnections) )  break;
@@ -480,8 +479,7 @@ size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, co
                                                                                   &(NewConnection->Socket.ErrMsg[0]));
             if( Result )  nRegistered++;  else
             {
-                NetworkConfigureClose(Handle,NewConnection);
-                free(NewConnection);
+                NetworkConfigureDestroy(Handle,NewConnection);
                 Net->iConnection[nConnections] = NewConnection = NULL;
             };
             nConnections++;
