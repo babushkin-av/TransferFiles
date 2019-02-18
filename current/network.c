@@ -36,14 +36,49 @@
 
 struct addrinfo* NetworkConfigureInit(const char *Host, const char *Port, struct CONNECT_INFO *iConn){
 
-    static struct addrinfo *resTmp = NULL;
+    static struct addrinfo *Handle = NULL;
 
     if( iConn )
-    {   int gaiResult = getaddrinfo(Host,Port,&(iConn->AddrInfo),&resTmp);
+    {   int gaiResult = getaddrinfo(Host,Port,&(iConn->AddrInfo),&Handle);
         if( gaiResult )
-        {  strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);  resTmp = NULL;  };
+        {
+            strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);
+            Handle = NULL;
+    };  };
+return(Handle); }
+
+/**************************************************************************************************************************
+ * ======================================= *** NetworkConfigureInit() Function *** ====================================== *
+ **************************************************************************************************************************/
+
+size_t NetworkConfigureInitAll(const char *Host, const char *Port, const struct addrinfo AddrInfo*, struct NETWORK_DATA *Net){
+
+    size_t nConnections = 0;
+
+    if( (AddrInfo)&&(Net) )
+    {
+        struct addrinfo *Handle = NULL;
+
+        int gaiResult = getaddrinfo(Host,Port,AddrInfo,&Handle);
+        if( gaiResult )
+            strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);
+
+        for(size_t n=0; (Handle)&&(n<NETWORK_MAX_CONN); n++)
+        {
+            struct CONNECT_INFO *NewConnection = (Net->iConnection[n]);
+
+            if( !NewConnection )
+                if( NewConnection = (struct CONNECT_INFO*)malloc(sizeof(struct CONNECT_INFO)) )
+                    Net->iConnection[n] = NewConnection;
+
+            if( NewConnection )  memset(NewConnection,0,sizeof(struct CONNECT_INFO));
+
+            if( NetworkConfigureNext(Handle,NewConnection) )  nConnections++;
+
+            Handle = (Handle->ai_next);
+        };
     };
-return(resTmp); }
+return(nConnections); }
 
 /**************************************************************************************************************************
  * ====================================== *** NetworkConfigureNext() Function *** ======================================= *
@@ -63,7 +98,9 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
 
         do
         {   if( gaiResult = getnameinfo((Handle->ai_addr),(Handle->ai_addrlen),&(Host->HostName[0]),APP_NAME_MAX,&(Host->PortName[0]),NI_MAXSERV,Flags[Result]) )
-                break;
+            {
+                strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);  break;
+            }
             if( !Result )
             {
                 strcpy(&(Host->HostNum[0]),&(Host->HostName[0]));
@@ -71,11 +108,10 @@ bool NetworkConfigureNext(struct addrinfo *Handle, struct CONNECT_INFO *iConn){
             };
         }while( (++Result) < nFlagsMax );
 
-        strncpy(&(iConn->Socket.ErrMsg[0]),gai_strerror(iConn->Socket.ErrCode=gaiResult),APP_NAME_MAX);
-
         if( Result )
         {
             struct protoent *ProtocolName = getprotobynumber(Handle->ai_protocol);
+
             if( ProtocolName )
             {
                 strcpy(&(Host->Protocol[0]),(ProtocolName->p_name));

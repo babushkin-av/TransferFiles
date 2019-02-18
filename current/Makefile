@@ -65,7 +65,7 @@ PROJECT := TransferFiles
 TARGET1 := transferfiles
 TARGETS := $(TARGET1)
 OBJECTS1:= main.o clock.o options.o network.o
-
+MAPFILE := mapfile.txt
 
 ARCHIVE := $(PROJECT)-$(VERSION)
 INSTALL := /usr/local/bin/$(PROJECT)
