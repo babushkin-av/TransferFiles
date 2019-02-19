@@ -70,12 +70,19 @@
     typedef  uint64_t       UINT64                                                                  // An unsigned INT64.
     typedef  uintptr_t      UINT_PTR;                                                               // An unsigned INT_PTR.
 
-    typedef  int32_t        LONG32                                                                  // A 32-bit signed integer.
-    typedef  int64_t        LONG64                                                                  // A 64-bit signed integer.
+    typedef  int32_t        LONG32;                                                                 // A 32-bit signed integer.
+    typedef  int64_t        LONG64;                                                                 // A 64-bit signed integer.
     typedef  intptr_t       LONG_PTR;                                                               // A signed long type for pointer precision.
-    typedef  uint32_t       ULONG32                                                                 // An unsigned LONG32.
-    typedef  uint64_t       ULONG64                                                                 // An unsigned LONG64.
+    typedef  uint32_t       ULONG32;                                                                // An unsigned LONG32.
+    typedef  uint64_t       ULONG64;                                                                // An unsigned LONG64.
     typedef  uintptr_t      ULONG_PTR;                                                              // An unsigned LONG_PTR.
+
+    typedef  LONG32        *LPLONG32;                                                               // A pointer to a LONG32.
+    typedef  LONG64        *LPLONG64;                                                               // A pointer to a LONG64.
+    typedef  LONG_PTR      *LPLONG_PTR;                                                             // A pointer to a LONG_PTR.
+    typedef  ULONG32       *LPULONG32;                                                              // A pointer to a ULONG32.
+    typedef  ULONG64       *LPULONG64;                                                              // A pointer to a ULONG64.
+    typedef  ULONG_PTR     *LPULONG_PTR;                                                            // A pointer to a ULONG_PTR.
 
     typedef  uint8_t        BYTE;                                                                   // A byte (8 bits).
     typedef  uint16_t       WORD;                                                                   // A 16-bit unsigned integer.
