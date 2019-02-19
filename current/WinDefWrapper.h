@@ -96,7 +96,7 @@
     typedef  QWORD         *LPQWORD;                                                                // A pointer to a QWORD.
 
     typedef  DWORD32       *LPDWORD32;                                                              // A pointer to a DWORD32.
-    typedef  DWORD64;      *LPDWORD64;                                                              // A pointer to a DWORD64.
+    typedef  DWORD64       *LPDWORD64;                                                              // A pointer to a DWORD64.
     typedef  DWORD_PTR     *LPDWORD_PTR;                                                            // A pointer to a DWORD_PTR.
 
 #endif                                                                                              // Detecting Windows
