@@ -33,11 +33,7 @@
 #else
 
 #include <limits.h>
-#include <errno.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <string.h>
 
 #endif // Detecting Windows
 
@@ -86,14 +82,14 @@
     typedef  uint32_t       DWORD;                                                                  // A 32-bit unsigned integer.
     typedef  uint64_t       QWORD;                                                                  // A 64-bit unsigned integer.
 
-    typedef  uint32_t       DWORD32;                                                                // A 32-bit unsigned integer.
-    typedef  uint64_t       DWORD64;                                                                // A 64-bit unsigned integer.
-    typedef  uintptr_t      DWORD_PTR;                                                              // An unsigned long type for pointer precision.
-
     typedef  BYTE          *LPBYTE;                                                                 // A pointer to a BYTE.
     typedef  WORD          *LPWORD;                                                                 // A pointer to a WORD.
     typedef  DWORD         *LPDWORD;                                                                // A pointer to a DWORD.
     typedef  QWORD         *LPQWORD;                                                                // A pointer to a QWORD.
+
+    typedef  uint32_t       DWORD32;                                                                // A 32-bit unsigned integer.
+    typedef  uint64_t       DWORD64;                                                                // A 64-bit unsigned integer.
+    typedef  uintptr_t      DWORD_PTR;                                                              // An unsigned long type for pointer precision.
 
     typedef  DWORD32       *LPDWORD32;                                                              // A pointer to a DWORD32.
     typedef  DWORD64       *LPDWORD64;                                                              // A pointer to a DWORD64.
