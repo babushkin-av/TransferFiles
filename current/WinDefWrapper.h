@@ -3,6 +3,8 @@
  *     File: WinDefWrapper.h (version 0.1).                                                                               *
  *     Dependency: none.                                                                                                  *
  *     Distribution: source/object code.                                                                                  *
+ *     Operating System: Windows [XP+], Linux [2.6.16+], BSD [4.4+].                                                      *
+ *     Platform: x86/x86-64, ARM.                                                                                         *
  *     License: GNU Lesser Public License version 2.1.                                                                    *
  *     Desription: basic definitions.                                                                                     *
  *                                                                                                                        *
