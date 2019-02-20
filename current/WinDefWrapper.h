@@ -44,9 +44,9 @@
  * ============================================= *** Global variables *** =============================================== *
  **************************************************************************************************************************/
 
-#   define   VOID           void                                                                    // Any type.
-#   define   CONST          const                                                                   // A variable whose value is to remain constant during execution.
+#   define     CONST           const                                                                // A variable whose value is to remain constant during execution.
 
+    typedef    void            VOID,          *PVOID,         *LPVOID;                              // Any type (and a pointer to it).
     typedef    int             BOOL,          *PBOOL,         *LPBOOL;                              // A Boolean variable (should be TRUE or FALSE).
 
     typedef    char            CHAR,          *PCHAR,         *LPCHAR;                              // An 8-bit Windows (ANSI) character.
@@ -76,28 +76,14 @@
     typedef    uint64_t        ULONG64,       *PULONG64;                                            // An unsigned LONG64 (and a pointer to it).
     typedef    uintptr_t       ULONG_PTR,     *PULONG_PTR;                                          // An unsigned LONG_PTR (and a pointer to it).
 
-    typedef  uint8_t        BYTE;                                                                   // A byte (8 bits).
-    typedef  uint16_t       WORD;                                                                   // A 16-bit unsigned integer.
-    typedef  uint32_t       DWORD;                                                                  // A 32-bit unsigned integer.
-    typedef  uint64_t       QWORD;                                                                  // A 64-bit unsigned integer.
+    typedef    uint8_t         BYTE,          *PBYTE,         *LPBYTE;                              // A byte (and a pointer to it).
+    typedef    uint16_t        WORD,          *PWORD,         *LPWORD;                              // A 16-bit unsigned integer (and a pointer to it).
+    typedef    uint32_t        DWORD,         *PDWORD,        *LPDWORD;                             // A 32-bit unsigned integer (and a pointer to it).
+    typedef    uint64_t        QWORD,         *PQWORD,        *LPQWORD;                             // A 64-bit unsigned integer (and a pointer to it).
 
-    typedef  BYTE          *PBYTE;                                                                  // A pointer to a BYTE.
-    typedef  WORD          *PWORD;                                                                  // A pointer to a WORD.
-    typedef  DWORD         *PDWORD;                                                                 // A pointer to a DWORD.
-    typedef  QWORD         *PQWORD;                                                                 // A pointer to a QWORD.
-
-    typedef  PBYTE          LPBYTE;                                                                 // A pointer to a BYTE.
-    typedef  PWORD          LPWORD;                                                                 // A pointer to a WORD.
-    typedef  PDWORD         LPDWORD;                                                                // A pointer to a DWORD.
-    typedef  PQWORD         LPQWORD;                                                                // A pointer to a QWORD.
-
-    typedef  uint32_t       DWORD32;                                                                // A 32-bit unsigned integer.
-    typedef  uint64_t       DWORD64;                                                                // A 64-bit unsigned integer.
-    typedef  uintptr_t      DWORD_PTR;                                                              // An unsigned long type for pointer precision.
-
-    typedef  DWORD32       *PDWORD32;                                                               // A pointer to a DWORD32.
-    typedef  DWORD64       *PDWORD64;                                                               // A pointer to a DWORD64.
-    typedef  DWORD_PTR     *PDWORD_PTR;                                                             // A pointer to a DWORD_PTR.
+    typedef    uint32_t        DWORD32,       *PDWORD32;                                            // A 32-bit unsigned integer.
+    typedef    uint64_t        DWORD64,       *PDWORD64;                                            // A 64-bit unsigned integer.
+    typedef    uintptr_t       DWORD_PTR,     *PDWORD_PTR;                                          // An unsigned long type for pointer precision.
 
 #endif                                                                                              // Detecting Windows
 
