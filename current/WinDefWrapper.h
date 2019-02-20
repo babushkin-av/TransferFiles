@@ -1,12 +1,15 @@
 /**************************************************************************************************************************
  *                                                                                                                        *
- *     File: WinDefWrapper.h (version 0.1).                                                                               *
- *     Dependency: none.                                                                                                  *
- *     Distribution: source/object code.                                                                                  *
- *     Operating System: Windows [XP+], Linux [2.6.16+], BSD [4.4+].                                                      *
- *     Platform: x86/x86-64, ARM.                                                                                         *
- *     License: GNU Lesser Public License version 2.1.                                                                    *
- *     Desription: basic definitions.                                                                                     *
+ *     File: . . . . . WinDefWrapper.h                                                                                    *
+ *     Status: . . . . version 0.1;                                                                                       *
+ *     Dependency: . . none;                                                                                              *
+ *     Distribution: . source/object code;                                                                                *
+ *     OS family:  . . Windows [XP+], Linux [2.6.16+], BSD [4.4+];                                                        *
+ *     Platform: . . . x86/x86-64, ARM;                                                                                   *
+ *     License:  . . . LGPL [2.1+].                                                                                       *
+ *                                                                                                                        *
+ *     Short desription:                                                                                                  *
+ *         basic definitions.                                                                                             *
  *                                                                                                                        *
  **************************************************************************************************************************
  *                                                                                                                        *
@@ -23,10 +26,10 @@
 #define WINDEF_WRAPPER_H
 
 /**************************************************************************************************************************
- * =============================================== *** Header Files *** ================================================= *
+ * =============================================== *** Header files *** ================================================= *
  **************************************************************************************************************************/
 
-#if defined(_WIN32) || defined(_WIN64) // Detecting Windows
+#if defined(_WIN32) || defined(_WIN64)                                                              // Detecting Windows
 
 #include <WinDef.h>
 #include <WinNT.h>
@@ -37,15 +40,9 @@
 #include <limits.h>
 #include <stdint.h>
 
-#endif // Detecting Windows
-
 /**************************************************************************************************************************
- * ============================================== *** Global Variables *** ============================================== *
+ * ============================================= *** Global variables *** =============================================== *
  **************************************************************************************************************************/
-
-#if defined(_WIN32) || defined(_WIN64)                                                              // Detecting Windows
-
-#else
 
 #   define   VOID           void                                                                    // Any type.
 #   define   CONST          const                                                                   // A variable whose value is to remain constant during execution.
@@ -63,41 +60,23 @@
     typedef  unsigned int   UINT;                                                                   // An unsigned INT.
     typedef  unsigned long  ULONG;                                                                  // An unsigned LONG.
 
-    typedef  int8_t         INT8                                                                    // An 8-bit signed integer.
-    typedef  int16_t        INT16                                                                   // A 16-bit signed integer.
-    typedef  int32_t        INT32                                                                   // A 32-bit signed integer.
-    typedef  int64_t        INT64                                                                   // A 64-bit signed integer.
-    typedef  intptr_t       INT_PTR;                                                                // A signed long type for pointer precision.
-    typedef  uint8_t        UINT8                                                                   // An unsigned INT8.
-    typedef  uint16_t       UINT16                                                                  // An unsigned INT16.
-    typedef  uint32_t       UINT32                                                                  // An unsigned INT32.
-    typedef  uint64_t       UINT64                                                                  // An unsigned INT64.
-    typedef  uintptr_t      UINT_PTR;                                                               // An unsigned INT_PTR.
+    typedef    int8_t          INT8,          *PINT8;                                               // An 8-bit signed integer (and a pointer to it).
+    typedef    int16_t         INT16,         *PINT16;                                              // A 16-bit signed integer (and a pointer to it).
+    typedef    int32_t         INT32,         *PINT32;                                              // A 32-bit signed integer (and a pointer to it).
+    typedef    int64_t         INT64,         *PINT64;                                              // A 64-bit signed integer (and a pointer to it).
+    typedef    intptr_t        INT_PTR,       *PINT_PTR;                                            // A signed long type for pointer precision.
+    typedef    uint8_t         UINT8,         *PINT8;                                               // An unsigned INT8 (and a pointer to it).
+    typedef    uint16_t        UINT16,        *PINT16;                                              // An unsigned INT16 (and a pointer to it).
+    typedef    uint32_t        UINT32,        *PINT32;                                              // An unsigned INT32 (and a pointer to it).
+    typedef    uint64_t        UINT64,        *PINT64;                                              // An unsigned INT64 (and a pointer to it).
+    typedef    uintptr_t       UINT_PTR,      *PUINT_PTR;                                           // An unsigned INT_PTR (and a pointer to it).
 
-    typedef  INT8          *PINT8;                                                                  // A pointer to an INT8.
-    typedef  INT16         *PINT16;                                                                 // A pointer to an INT16.
-    typedef  INT32         *PINT32;                                                                 // A pointer to an INT32.
-    typedef  INT64         *PINT64;                                                                 // A pointer to an INT64.
-    typedef  INT_PTR       *PINT_PTR;                                                               // A pointer to an INT_PTR.
-    typedef  UINT8         *PUINT8;                                                                 // A pointer to an UINT8.
-    typedef  UINT16        *PUINT16;                                                                // A pointer to an UINT16.
-    typedef  UINT32        *PUINT32;                                                                // A pointer to an UINT32.
-    typedef  UINT64        *PUINT64;                                                                // A pointer to an UINT64.
-    typedef  UINT_PTR      *PUINT_PTR;                                                              // A pointer to an UINT_PTR.
-
-    typedef  int32_t        LONG32;                                                                 // A 32-bit signed integer.
-    typedef  int64_t        LONG64;                                                                 // A 64-bit signed integer.
-    typedef  intptr_t       LONG_PTR;                                                               // A signed long type for pointer precision.
-    typedef  uint32_t       ULONG32;                                                                // An unsigned LONG32.
-    typedef  uint64_t       ULONG64;                                                                // An unsigned LONG64.
-    typedef  uintptr_t      ULONG_PTR;                                                              // An unsigned LONG_PTR.
-
-    typedef  LONG32        *PLONG32;                                                                // A pointer to a LONG32.
-    typedef  LONG64        *PLONG64;                                                                // A pointer to a LONG64.
-    typedef  LONG_PTR      *PLONG_PTR;                                                              // A pointer to a LONG_PTR.
-    typedef  ULONG32       *PULONG32;                                                               // A pointer to a ULONG32.
-    typedef  ULONG64       *PULONG64;                                                               // A pointer to a ULONG64.
-    typedef  ULONG_PTR     *PULONG_PTR;                                                             // A pointer to a ULONG_PTR.
+    typedef    int32_t         LONG32,        *PLONG32;                                             // A 32-bit signed integer (and a pointer to it).
+    typedef    int64_t         LONG64,        *PLONG64;                                             // A 64-bit signed integer (and a pointer to it).
+    typedef    intptr_t        LONG_PTR,      *PLONG_PTR;                                           // A signed long type for pointer precision.
+    typedef    uint32_t        ULONG32,       *PULONG32;                                            // An unsigned LONG32 (and a pointer to it).
+    typedef    uint64_t        ULONG64,       *PULONG64;                                            // An unsigned LONG64 (and a pointer to it).
+    typedef    uintptr_t       ULONG_PTR,     *PULONG_PTR;                                          // An unsigned LONG_PTR (and a pointer to it).
 
     typedef  uint8_t        BYTE;                                                                   // A byte (8 bits).
     typedef  uint16_t       WORD;                                                                   // A 16-bit unsigned integer.
