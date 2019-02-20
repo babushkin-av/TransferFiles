@@ -47,28 +47,26 @@
 #   define   VOID           void                                                                    // Any type.
 #   define   CONST          const                                                                   // A variable whose value is to remain constant during execution.
 
-    typedef  int            BOOL;                                                                   // A Boolean variable (should be TRUE or FALSE).
-    typedef  BOOL          *PBOOL;                                                                  // A pointer to a BOOL.
-    typedef  PBOOL          LPBOOL;                                                                 // A pointer to a BOOL.
+    typedef    int             BOOL,          *PBOOL,         *LPBOOL;                              // A Boolean variable (should be TRUE or FALSE).
 
-    typedef  char           CHAR;                                                                   // An 8-bit Windows (ANSI) character.
-    typedef  short          SHORT;                                                                  // A short integer.
-    typedef  int            INT;                                                                    // A signed integer.
-    typedef  long           LONG;                                                                   // A signed long integer.
-    typedef  unsigned char  UCHAR                                                                   // An unsigned CHAR.
-    typedef  unsigned short USHORT;                                                                 // An unsigned SHORT.
-    typedef  unsigned int   UINT;                                                                   // An unsigned INT.
-    typedef  unsigned long  ULONG;                                                                  // An unsigned LONG.
+    typedef    char            CHAR,          *PCHAR,         *LPCHAR;                              // An 8-bit Windows (ANSI) character.
+    typedef    short           SHORT,         *PSHORT,        *LPSHORT;                             // A short integer.
+    typedef    int             INT,           *PINT,          *LPINT;                               // A signed integer.
+    typedef    long            LONG,          *PLONG,         *LPLONG;                              // A signed long integer.
+    typedef    unsigned char   UCHAR,         *PUCHAR,        *LPUCHAR;                             // An unsigned CHAR.
+    typedef    unsigned short  USHORT,        *PUSHORT,       *LPUSHORT;                            // An unsigned SHORT.
+    typedef    unsigned int    UINT,          *PUINT,         *LPUINT;                              // An unsigned INT.
+    typedef    unsigned long   ULONG,         *PULONG,        *LPULONG;                             // An unsigned LONG.
 
     typedef    int8_t          INT8,          *PINT8;                                               // An 8-bit signed integer (and a pointer to it).
     typedef    int16_t         INT16,         *PINT16;                                              // A 16-bit signed integer (and a pointer to it).
     typedef    int32_t         INT32,         *PINT32;                                              // A 32-bit signed integer (and a pointer to it).
     typedef    int64_t         INT64,         *PINT64;                                              // A 64-bit signed integer (and a pointer to it).
     typedef    intptr_t        INT_PTR,       *PINT_PTR;                                            // A signed long type for pointer precision.
-    typedef    uint8_t         UINT8,         *PINT8;                                               // An unsigned INT8 (and a pointer to it).
-    typedef    uint16_t        UINT16,        *PINT16;                                              // An unsigned INT16 (and a pointer to it).
-    typedef    uint32_t        UINT32,        *PINT32;                                              // An unsigned INT32 (and a pointer to it).
-    typedef    uint64_t        UINT64,        *PINT64;                                              // An unsigned INT64 (and a pointer to it).
+    typedef    uint8_t         UINT8,         *PUINT8;                                              // An unsigned INT8 (and a pointer to it).
+    typedef    uint16_t        UINT16,        *PUINT16;                                             // An unsigned INT16 (and a pointer to it).
+    typedef    uint32_t        UINT32,        *PUINT32;                                             // An unsigned INT32 (and a pointer to it).
+    typedef    uint64_t        UINT64,        *PUINT64;                                             // An unsigned INT64 (and a pointer to it).
     typedef    uintptr_t       UINT_PTR,      *PUINT_PTR;                                           // An unsigned INT_PTR (and a pointer to it).
 
     typedef    int32_t         LONG32,        *PLONG32;                                             // A 32-bit signed integer (and a pointer to it).
