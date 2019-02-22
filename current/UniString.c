@@ -13,12 +13,8 @@ TCHAR* lstrcpy(TCHAR *Dest, CONST TCHAR *Src){
 
     if( !Src )  Dest = NULL;
     if( Dest )
-    {
-        do
-        {   TCHAR temp = *Src;
+        for(; *Dest=*Src; Src++,Dest++);
 
-        }while( *Dest = temp );
-    };
 return(Dest); }
 
 /**************************************************************************************************************************
@@ -29,18 +25,9 @@ TCHAR* lstrcpyn(TCHAR *Dest, CONST TCHAR *Src, int nCch){
 
     if( !Src )  Dest = NULL;
     if( Dest )
-    {
-        TCHAR *DestMax = (Dest+nCch-1);
+        for(TCHAR *DestMax = (Dest+nCch); *Dest=*Src; Src++,Dest++)
+            if( Dest < DestMax ) {   *Dest = 0;  break;   };
 
-        do
-        {   TCHAR temp = *Src;
-            if( *Dest = temp )  break;
-
-            Src++;
-            if( (++Dest) < DestMax ) {   *Dest = 0;  break;   };
-
-        }while(true);
-    };
 return(Dest); }
 
 /**************************************************************************************************************************

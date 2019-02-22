@@ -169,7 +169,7 @@ warranty:
 clean:
 	@echo Cleaning...
 	-rm --verbose --force --recursive --one-file-system *~ ../*~ ../docs/*~
-	-rm --verbose --force *.d *.o *.ko *.obj *.elf *.code *.map *.exp *.gch *.pch *.idb *.pdb .fuse* *.ilk
+	-rm --verbose --force *.d *.o *.ko *.obj *.elf *.s *.code *.map *.exp *.gch *.pch *.idb *.pdb .fuse* *.ilk
 
 cleanall: clean
 	-rm --verbose --force *.log *.dat *.lst *.hex *.lib *.so *.out *.dll *.exe $(TARGETS) $(CHKFILE)
