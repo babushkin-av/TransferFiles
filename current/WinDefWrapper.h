@@ -39,17 +39,28 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <limits.h>
 
 /**************************************************************************************************************************
  * ============================================= *** Global variables *** =============================================== *
  **************************************************************************************************************************/
 
+#   ifndef     CONST
 #   define     CONST           const                                                                // A variable whose value is to remain constant during execution.
+#   endif   // CONST
+
+#   ifndef     FALSE
+#   define     FALSE           false
+#   endif   // FALSE
+
+#   ifndef     TRUE
+#   define     TRUE            true
+#   endif   // TRUE
+
+    typedef    bool            BOOL,          *PBOOL,         *LPBOOL;                              // A Boolean variable (should be TRUE or FALSE).
 
     typedef    void            VOID,          *PVOID,         *LPVOID;                              // Any type (and a pointer to it).
-    typedef    int             BOOL,          *PBOOL,         *LPBOOL;                              // A Boolean variable (should be TRUE or FALSE).
-
     typedef    char            CHAR,          *PCHAR,         *LPCHAR;                              // An 8-bit Windows (ANSI) character.
     typedef    short           SHORT,         *PSHORT,        *LPSHORT;                             // A short integer.
     typedef    int             INT,           *PINT,          *LPINT;                               // A signed integer.
@@ -91,7 +102,7 @@
     typedef    WCHAR           TCHAR;
 #   else                                                                                            // A WCHAR if UNICODE is defined, a CHAR otherwise.
     typedef     CHAR           TCHAR;
-#   endif
+#   endif   // UNICODE
 
     typedef                     CHAR          *PSTR,          *LPSTR;
     typedef              CONST  CHAR          *PCSTR,         *LPCSTR;
@@ -100,24 +111,10 @@
     typedef                    TCHAR          *PTSTR,         *LPTSTR;
     typedef              CONST TCHAR          *PCTSTR,        *LPCTSTR;
 
-/**************************************************************************************************************************
- * ============================================ *** Function Prototypes *** ============================================= *
- **************************************************************************************************************************/
-
-#ifdef __cplusplus
-extern "С" {
-#endif
-/* ---------------------------------------------------------------------------------------------------------------------- */
-
-
-/* ---------------------------------------------------------------------------------------------------------------------- */
-#ifdef __cplusplus
-};
-#endif
+#endif                                                                                              // Detecting Windows
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
  **************************************************************************************************************************/
-#endif // Detecting Windows
 #endif // WINDEF_WRAPPER_H
 
