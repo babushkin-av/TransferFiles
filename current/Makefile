@@ -76,7 +76,7 @@ CHKFILE := checksum.txt
 CPUTYPE := $(shell uname --machine)
 OSTYPE  := $(shell uname --kernel-name)
 
-CFLAGS  := -std=c99 -Os
+CFLAGS  := -std=c99 -Wall -Os -falign-functions
 
 .PHONY: all debug dist checksum checking list help license warranty clean cleanall install uninstall
 
