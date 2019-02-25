@@ -1,11 +1,15 @@
 /**************************************************************************************************************************
  *                                                                                                                        *
- *     File: clock.c (version 0.9).                                                                                       *
- *     Type: module.                                                                                                      *
- *     Distribution: source/object code.                                                                                  *
- *     License: GNU Lesser Public License version 2.1.                                                                    *
- *     Dependency: base.h.                                                                                                *
- *     Desription: .                                                                                                      *
+ *     File: . . . . . clock.h                                                                                            *
+ *     Status: . . . . version 0.9;                                                                                       *
+ *     Dependency: . . none;                                                                                              *
+ *     Distribution: . source/object code;                                                                                *
+ *     OS family:  . . Windows [XP+], Linux [2.6.16+], BSD [4.4+];                                                        *
+ *     Platform: . . . x86/x86-64, ARM;                                                                                   *
+ *     License:  . . . LGPL [2.1+].                                                                                       *
+ *                                                                                                                        *
+ *     Short desription:                                                                                                  *
+ *          .                                                                                                             *
  *                                                                                                                        *
  **************************************************************************************************************************
  *                                                                                                                        *
