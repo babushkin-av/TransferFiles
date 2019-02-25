@@ -1,4 +1,27 @@
-
+/**************************************************************************************************************************
+ *                                                                                                                        *
+ *     File: . . . . . UniString.h                                                                                        *
+ *     Status: . . . . version 0.2;                                                                                       *
+ *     Dependency: . . none;                                                                                              *
+ *     Distribution: . source/object code;                                                                                *
+ *     OS family:  . . Windows [XP+], Linux [2.6.16+], BSD [4.4+];                                                        *
+ *     Platform: . . . x86/x86-64, ARM;                                                                                   *
+ *     License:  . . . LGPL [2.1+].                                                                                       *
+ *                                                                                                                        *
+ *     Short desription:                                                                                                  *
+ *          .                                                                                                             *
+ *                                                                                                                        *
+ **************************************************************************************************************************
+ *                                                                                                                        *
+ *     Copyleft, 2017-2019, <feedback@babushkin.ru.net>, Alexander Babushkin.                                             *
+ *                                                                                                                        *
+ *     This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser Public   *
+ * License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later *
+ * version.                                                                                                               *
+ *     This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser Public License for more details.  *
+ *                                                                                                                        *
+ **************************************************************************************************************************/
 #ifndef UNISTRING_H
 #define UNISTRING_H
 

@@ -1,7 +1,7 @@
 /**************************************************************************************************************************
  *                                                                                                                        *
  *     File: . . . . . WinDefWrapper.h                                                                                    *
- *     Status: . . . . version 0.1;                                                                                       *
+ *     Status: . . . . version 0.2;                                                                                       *
  *     Dependency: . . none;                                                                                              *
  *     Distribution: . source/object code;                                                                                *
  *     OS family:  . . Windows [XP+], Linux [2.6.16+], BSD [4.4+];                                                        *
