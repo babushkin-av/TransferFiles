@@ -157,8 +157,6 @@ help:
 	-cat ../README.txt
 
 license:
-	-cat ../LICENSE
-
 warranty:
 	-cat ../COPYING
 
@@ -168,7 +166,7 @@ warranty:
 
 clean:
 	@echo Cleaning...
-	-rm --verbose --force --recursive --one-file-system *~ ../*~ ../docs/*~
+	-rm --verbose --force --one-file-system *~ ../*~ ../docs/*~ ../docs/gfx/*~
 	-rm --verbose --force *.d *.o *.ko *.obj *.elf *.s *.code *.map *.exp *.gch *.pch *.idb *.pdb .fuse* *.ilk
 
 cleanall: clean
