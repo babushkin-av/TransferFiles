@@ -28,20 +28,32 @@ A:active {                      color:                         darkorange;
 A[rel="nofollow"] {             color:                         mediumblue;
 }
 
-P { text-indent:0; }
-P.l { text-align:left; }
-P.c { text-align:center; }
-P.r { text-align:right; }
+P {                             text-indent:                   0;
+}
 
-OL.abc { list-style-type:lower-latin; }
-OL.123 { list-style-type:decimal; }
+OL.abc {                        list-style-type:               lower-latin;
+}
+OL.123 {                        list-style-type:               decimal;
+}
 
-DT { font-weight:bold; }
+DT {                            font-weight:                   bold;
+}
 
-CODE,VAR,SAMP,KBD,PRE { text-decoration:none; font-family: Courier, FreeMono, Monospace, fixed; }
-PRE { background-color:whitesmoke; padding: 0.8em; }
-DFN { text-decoration:none; }
-STRONG,EM { font-weight:bolder; }
-SUB,SUP { font-size:xx-small; }
+CODE,VAR,SAMP,KBD,PRE {         text-decoration:               none;
+                                font-family:                   Courier, FreeMono, Monospace, fixed;
+}
 
+PRE {                           background-color:              whitesmoke;
+                                padding:                       0.8em;
+}
+
+SUB,SUP {                       font-size:                     xx-small;
+}
+
+.tLeft {                        text-align:                    left;
+}
+.tCenter {                      text-align:                    center;
+}
+.tRight {                       text-align:                    right;
+}
 
