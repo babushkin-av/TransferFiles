@@ -1,0 +1,32 @@
+﻿
+BODY { color:black; background-color:white; text-align:justify; font-family: Verdana, Helvetica, sans-serif; }
+
+A { text-decoration:underline; }
+A:link { color:indigo; }
+A:visited { color:indigo; }
+A:hover { text-decoration:none; }
+A:active { color:darkorange; }
+A.external { color:mediumblue; }
+
+H1,H2,H3,H4,H5,H6 { text-align:left; margin-top:1.2em; margin-bottom:0.8em; }
+
+P { text-indent:0; margin-top:0.6em; margin-bottom:0.6em; }
+P.l { text-align:left; }
+P.c { text-align:center; }
+P.r { text-align:right; }
+
+OL,UL,LI { margin-top:0.6em; margin-bottom:0.6em; }
+OL.abc { list-style-type:lower-latin; }
+OL.123 { list-style-type:decimal; }
+
+DL,DT { margin-top:0.6em; margin-bottom:0.3em; }
+DL { font-size:smaller; }
+DT { font-weight:bold; }
+
+CODE,VAR,SAMP,KBD,PRE { text-decoration:none; font-family: Courier, FreeMono, Monospace, fixed; }
+PRE { background-color:whitesmoke; }
+DFN { text-decoration:none; }
+STRONG,EM { font-weight:bolder; }
+SUB,SUP { font-size:xx-small; }
+
+
