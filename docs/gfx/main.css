@@ -5,14 +5,24 @@ BODY {                          color:                         black;
                                 font-family:                   Verdana, Helvetica, sans-serif;
 }
 
-OL,UL,DL,PRE {                  margin:                        0.8em;
+IMG,OL,UL,DL,PRE {              margin:                        0.8em;
 }
 
 P,LI,DT,DD {                    margin:                        0.6em 0.8em;
 }
 
+IMG,LI,DT,DD,PRE {              page-break-inside:             avoid;
+}
+
 H1,H2,H3,H4,H5,H6 {             text-align:                    left;
                                 margin:                        1.4em 0.8em 0.8em;
+}
+H1+P, H2+P, H3+P, H4+P {        margin-top:                   -0.2em;
+                                page-break-before:             avoid;
+                                page-break-inside:             avoid;
+}
+H3+H4 {                         margin-top:                   -0.2em;
+                                page-break-before:             avoid;
 }
 
 A {                             text-decoration:               underline;
@@ -50,10 +60,15 @@ PRE {                           background-color:              whitesmoke;
 SUB,SUP {                       font-size:                     xx-small;
 }
 
+IMG.gpl {                       width:                         18%;
+                                float:                         right;
+}
+
 .tLeft {                        text-align:                    left;
 }
 .tCenter {                      text-align:                    center;
 }
 .tRight {                       text-align:                    right;
 }
-
+.pBreak {                       page-break-before:             always;
+}
