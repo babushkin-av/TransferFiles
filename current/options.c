@@ -114,7 +114,7 @@ return(Result); }
  * =========================================== *** GetOptionID() Function *** =========================================== *
  **************************************************************************************************************************/
 
-unsigned int GetOptionID(char *argv){
+unsigned int GetOptionID(const char *argv){
 
     unsigned int  result;
 
@@ -127,9 +127,9 @@ unsigned int GetOptionID(char *argv){
             if( !( CurrentOption = (char*)(DataBase->Option) ) ) break;
             if( CurrentParam = (char*)(DataBase->OptionExt) )
             {
-                      strLength = strlen(CurrentOption);
-                char *Separator = (argv + strLength);
+                strLength = strlen(CurrentOption);
 
+                char *Separator = (argv + strLength);
                 if( *Separator == *CurrentParam )  SetOptionVar(result,(Separator+1));
             };
             if(!strncmp(argv,CurrentOption,strLength))  return(result);
