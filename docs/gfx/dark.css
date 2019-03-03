@@ -25,6 +25,9 @@ H3+H4 {                         margin-top:                   -0.2em;
                                 page-break-before:             avoid;
 }
 
+MAIN,FOOTER {                   page-break-before:             always;
+}
+
 A {                             text-decoration:               underline;
                                 color:                         orange;
 }
@@ -41,6 +44,18 @@ OL.123 {                        list-style-type:               decimal;
 }
 
 DT {                            font-weight:                   bold;
+}
+
+TABLE {                         margin:                        0.8em
+}
+THEAD {                         text-align:                    center;
+}
+TH {                            font-weight:                   bold;
+                                background-color:              whitesmoke;
+}
+TH,TD {                         margin:                        1px;
+                                padding:                       0.4em 0.6em 0.2em;
+                                border:                        thin solid gray;
 }
 
 CODE,VAR,SAMP,KBD,PRE {         text-decoration:               none;
@@ -64,5 +79,4 @@ IMG.gpl {                       width:                         18%;
 }
 .tRight {                       text-align:                    right;
 }
-.pBreak {                       page-break-before:             always;
-}
+
