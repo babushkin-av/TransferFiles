@@ -25,6 +25,9 @@ H3+H4 {                         margin-top:                   -0.2em;
                                 page-break-before:             avoid;
 }
 
+MAIN,FOOTER {                   page-break-before:             always;
+}
+
 A {                             text-decoration:               underline;
                                 color:                         mediumblue;
 }
@@ -64,7 +67,6 @@ IMG.gpl {                       width:                         18%;
 }
 .tRight {                       text-align:                    right;
 }
-.pBreak {                       page-break-before:             always;
-}
+
 
 
