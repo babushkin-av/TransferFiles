@@ -37,6 +37,9 @@ A:hover {                       text-decoration:               none;
 
 P {                             text-indent:                   0;
 }
+P.Footer {                      text-align:                    right;
+                                font-size:                     x-small;
+}
 
 OL.abc {                        list-style-type:               lower-latin;
 }
