@@ -46,16 +46,20 @@ OL.123 {                        list-style-type:               decimal;
 DT {                            font-weight:                   bold;
 }
 
-TABLE {                         margin:                        0.8em
+TABLE {                         margin:                        0.8em auto;
+}
+CAPTION {                       text-align:                    right;
+                                font-size:                     smaller;
+                                font-style:                    italic;
 }
 THEAD {                         text-align:                    center;
 }
 TH {                            font-weight:                   bold;
-                                background-color:              whitesmoke;
+                                background-color:              gainsboro;
 }
 TH,TD {                         margin:                        1px;
                                 padding:                       0.4em 0.6em 0.2em;
-                                border:                        thin solid gray;
+                                border:                        thin solid silver;
 }
 
 CODE,VAR,SAMP,KBD,PRE {         text-decoration:               none;
