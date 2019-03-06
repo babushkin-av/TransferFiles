@@ -45,26 +45,44 @@
 #endif
 
 
-enum OPTIONS_ID {
-    OPTION_NULL          = ( 0 ),                              //    (0);
-    OPTION_HELP          = ( 1 ),                              //    (1);  Show help-screen and exits.
-    OPTION_VERSION       = ( 1 <<  1),                         //    (2);  Show version and exits.
-    OPTION_QUIET         = ( 1 <<  2),                         //    (4);  Suppress messages.
-    OPTION_DEBUG         = ( 1 <<  3),                         //    (8);  Show debug messages.
-    OPTION_FORCE         = ( 1 <<  4),                         //   (16);  Try to recover from errors.
-    OPTION_RECURSIVE     = ( 1 <<  5),                         //   (32);  Dive into directories recursively.
-    OPTION_NOFOLLOW      = ( 1 <<  6),                         //   (64);  Do not follow symbolic links.
-    OPTION_OVERWRITE     = ( 1 <<  7),                         //  (128);  Overwrite existing files.
-    OPTION_IPV4          = ( 1 <<  8),                         //  (256);  Use IPv4.
-    OPTION_IPV6          = ( 1 <<  9),                         //  (512);  Use IPv6.
-    OPTION_SERVER        = ( 1 << 10),                         // (1024);  Work as a server.
-    OPTION_CLIENT        = ( 1 << 11),                         // (2048);  Work as a client.
-    OPTION_PORT          = ( 1 << 12),                         // (4096);  Set up a port number.
-    OPTION_LAST          = ( 1 << 13)                          // (8192);
+enum OPTION_IDs {
+    OPTION_NULL          = ( 0 ),                              //
+    OPTION_HELP          = ( 1 ),                              //  Show help-screen and exits.
+    OPTION_VERSION       = ( 1 <<  1),                         //  Show version and exits.
+    OPTION_QUIET         = ( 1 <<  2),                         //  Suppress messages.
+    OPTION_DEBUG         = ( 1 <<  3),                         //  Show debug messages.
+    OPTION_FORCE         = ( 1 <<  4),                         //  Try to recover from errors.
+    OPTION_RECURSIVE     = ( 1 <<  5),                         //  Dive into directories recursively.
+    OPTION_NOFOLLOW      = ( 1 <<  6),                         //  Do not follow symbolic links.
+    OPTION_OVERWRITE     = ( 1 <<  7),                         //  Overwrite existing files.
+    OPTION_IPV4          = ( 1 <<  8),                         //  Use IPv4.
+    OPTION_IPV6          = ( 1 <<  9),                         //  Use IPv6.
+    OPTION_SERVER        = ( 1 << 10),                         //  Work as a server.
+    OPTION_CLIENT        = ( 1 << 11),                         //  Work as a client.
+    OPTION_PORT          = ( 1 << 12),                         //  Set up a port number.
+    OPTION_LAST          = ( 1 << 13)                          //
 };
+
+enum OPTIONS_FLAGs {
+    OPTION_FLAG_NULL     = ( OPTION_NULL ),                                                         //    (0);
+    OPTION_HELP          = ( 1 << ( OPTION_HELP      - 1 ) ),                                       //    (1);
+    OPTION_VERSION       = ( 1 << ( OPTION_VERSION   - 1 ) ),                                       //    (2);
+    OPTION_QUIET         = ( 1 << ( OPTION_QUIET     - 1 ) ),                                       //    (4);
+    OPTION_DEBUG         = ( 1 << ( OPTION_DEBUG     - 1 ) ),                                       //    (8);
+    OPTION_FORCE         = ( 1 << ( OPTION_FORCE     - 1 ) ),                                       //   (16);
+    OPTION_RECURSIVE     = ( 1 << ( OPTION_RECURSIVE - 1 ) ),                                       //   (32);
+    OPTION_NOFOLLOW      = ( 1 << ( OPTION_NOFOLLOW  - 1 ) ),                                       //   (64);
+    OPTION_OVERWRITE     = ( 1 << ( OPTION_OVERWRITE - 1 ) ),                                       //  (128);
+    OPTION_IPV4          = ( 1 << ( OPTION_IPV4      - 1 ) ),                                       //  (256);
+    OPTION_IPV6          = ( 1 << ( OPTION_IPV6      - 1 ) ),                                       //  (512);
+    OPTION_SERVER        = ( 1 << ( OPTION_SERVER    - 1 ) ),                                       // (1024);
+    OPTION_CLIENT        = ( 1 << ( OPTION_CLIENT    - 1 ) ),                                       // (2048);
+    OPTION_PORT          = ( 1 << ( OPTION_PORT      - 1 ) ),                                       // (4096);
+    OPTION_LAST          = ( 1 << ( OPTION_LAST      - 1 ) )                                        // (8192);
 
 struct OPTIONS_DATA {
     unsigned int       ID;
+    unsigned int       Flag;
     const char        *Option;
     const char        *OptionExt;
     const char        *Help;
