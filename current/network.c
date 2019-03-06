@@ -51,7 +51,7 @@ return(Handle); }
  * ======================================= *** NetworkConfigureInit() Function *** ====================================== *
  **************************************************************************************************************************/
 
-size_t NetworkConfigureInitAll(const char *Host, const char *Port, const struct addrinfo AddrInfo*, struct NETWORK_DATA *Net){
+size_t NetworkConfigureInitAll(const char *Host, const char *Port, const struct addrinfo *AddrInfo, struct NETWORK_DATA *Net){
 
     size_t nConnections = 0;
 

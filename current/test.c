@@ -1,12 +1,13 @@
 
 #include <stdlib.h>
 
-#include "UniString.h"
+//#include "UniString.h"
 
-TCHAR buf[64];
+char buf[64];
 
 int main(void){
 
-    lstrcpyn(&buf[0],"Fuck!",3);
+    buf = { 's','t','r' };
+
 
 return(EXIT_SUCCESS); }

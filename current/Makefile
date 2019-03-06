@@ -76,7 +76,7 @@ CHKFILE := checksum.txt
 CPUTYPE := $(shell uname --machine)
 OSTYPE  := $(shell uname --kernel-name)
 
-CFLAGS  := -std=c99 -Wall -Os -falign-functions
+CFLAGS  := -std=c99 -Os -falign-functions
 
 .PHONY: all debug dist checksum checking list help license warranty clean cleanall install uninstall
 
@@ -110,7 +110,7 @@ all:    $(TARGETS)
 #                                                                                           #
 #############################################################################################
 
-debug:  CFLAGS := -std=c99 -gstabs -Og -D APP_DEBUG=stabs
+debug:  CFLAGS := -std=c99 -Wall -Wformat=0 -gstabs -Og -D APP_DEBUG=stabs
 debug:  all
 
 #############################################################################################

@@ -106,8 +106,8 @@ int main(int argc, char *argv[], char *env[]){
 
     /* Memory allocation ----------------------------------------------------------------------------------- */
 
-    if( MainData = (struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA)) )
-        if( MainData->Options.oIndexes = (unsigned int*)calloc(GetOptionIndex(oFlags),sizeof(unsigned int)) )
+    if( (MainData=(struct MAIN_DATA*)calloc(1,sizeof(struct MAIN_DATA))) )
+        if( (MainData->Options.oIndexes=(unsigned int*)calloc(GetOptionIndex(oFlags),sizeof(unsigned int))) )
                 oFlags = OPTION_NULL;
 
     if( oFlags )  error(errno,errno," Fatal! Can`t allocate memory!  (%d) ",errno);
@@ -288,8 +288,8 @@ unsigned int Main_ParsingCommandLine(struct APP_OPTIONS *Options, char **ArgV){
     unsigned int *pID;
 
     if( Options )
-        if( pID=(Options->oIndexes) )
-            for(unsigned int oID; oID=GetOptionID(ArgV[oCurrent]); oCurrent++ )                               // Recognizing a string:
+        if( (pID=(Options->oIndexes)) )
+            for(unsigned int oID; (oID=GetOptionID(ArgV[oCurrent])); oCurrent++ )                               // Recognizing a string:
                 switch(oID)
                 {
                     case OPTION_HELP:     ShowHelp();  return(0);                                             // - the case for a "help" option;
@@ -315,7 +315,7 @@ int Main_ShowDebugInfo(const struct utsname *SysInfo, const struct APP_CLOCK *Ti
 
         Result+=printf(" On %s host: %s \r\n",&(SysInfo->sysname[0]),
                                           &(SysInfo->nodename[0]));
-        Result+=printf(" Allocating: %u bytes. \r\n\r\n",sizeof(struct MAIN_DATA));
+        Result+=printf(" Allocating: %z bytes. \r\n\r\n",sizeof(struct MAIN_DATA));
         Result+=puts(" Parsing options: ");
 
         Result+=Main_ShowOptionsInfo((Options->oIndexes),(Options->iMax));
@@ -473,7 +473,7 @@ size_t MainQueue_RegisterNewConnections(int Handle, struct NETWORK_DATA *Net, co
         {
             bool Result = NetworkConfigureRegister(Handle,NewConnection,(oFlags & OPTION_SERVER));
 
-            if( fDebug )  printf("    +% 2u.[%s:%d] - (%d) %s; \r\n",nConnections,&(NewConnection->HostInfo.Protocol[0]),
+            if( fDebug )  printf("    +% 2z.[%s:%d] - (%d) %s; \r\n",nConnections,&(NewConnection->HostInfo.Protocol[0]),
                                                                                    (NewConnection->Socket.Handle),
                                                                                    (NewConnection->Socket.ErrCode),
                                                                                   &(NewConnection->Socket.ErrMsg[0]));
@@ -501,7 +501,7 @@ bool MainQueue_ShowReadyMessage(struct APP_CLOCK *Time){
     if( Time )
         if( GetTimeDiff(Time,"%M:%S") )
         {
-            printf(" Waiting for connection: %s ... \r",&(Time->String));  fflush(stdout);
+            printf(" Waiting for connection: %s ... \r",&(Time->String[0]));  fflush(stdout);
             Result = true;
         };
 return(Result); }
