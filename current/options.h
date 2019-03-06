@@ -46,21 +46,21 @@
 
 
 enum OPTION_IDs {
-    OPTION_NULL          = ( 0 ),                              //
-    OPTION_HELP          = ( 1 ),                              //  Show help-screen and exits.
-    OPTION_VERSION       = ( 1 <<  1),                         //  Show version and exits.
-    OPTION_QUIET         = ( 1 <<  2),                         //  Suppress messages.
-    OPTION_DEBUG         = ( 1 <<  3),                         //  Show debug messages.
-    OPTION_FORCE         = ( 1 <<  4),                         //  Try to recover from errors.
-    OPTION_RECURSIVE     = ( 1 <<  5),                         //  Dive into directories recursively.
-    OPTION_NOFOLLOW      = ( 1 <<  6),                         //  Do not follow symbolic links.
-    OPTION_OVERWRITE     = ( 1 <<  7),                         //  Overwrite existing files.
-    OPTION_IPV4          = ( 1 <<  8),                         //  Use IPv4.
-    OPTION_IPV6          = ( 1 <<  9),                         //  Use IPv6.
-    OPTION_SERVER        = ( 1 << 10),                         //  Work as a server.
-    OPTION_CLIENT        = ( 1 << 11),                         //  Work as a client.
-    OPTION_PORT          = ( 1 << 12),                         //  Set up a port number.
-    OPTION_LAST          = ( 1 << 13)                          //
+    OPTION_NULL,                                                                                    //
+    OPTION_HELP,                                                                                    //  Show help-screen and exits.
+    OPTION_VERSION,                                                                                 //  Show version and exits.
+    OPTION_QUIET,                                                                                   //  Suppress messages.
+    OPTION_DEBUG,                                                                                   //  Show debug messages.
+    OPTION_FORCE,                                                                                   //  Try to recover from errors.
+    OPTION_RECURSIVE,                                                                               //  Dive into directories recursively.
+    OPTION_NOFOLLOW,                                                                                //  Do not follow symbolic links.
+    OPTION_OVERWRITE,                                                                               //  Overwrite existing files.
+    OPTION_IPV4,                                                                                    //  Use IPv4.
+    OPTION_IPV6,                                                                                    //  Use IPv6.
+    OPTION_SERVER,                                                                                  //  Work as a server.
+    OPTION_CLIENT,                                                                                  //  Work as a client.
+    OPTION_PORT,                                                                                    //  Set up a port number.
+    OPTION_LAST                                                                                     //
 };
 
 enum OPTIONS_FLAGs {
