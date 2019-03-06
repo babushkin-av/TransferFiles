@@ -30,22 +30,6 @@
  * ============================================== *** Global Variables *** ============================================== *
  **************************************************************************************************************************/
 
-enum OPTION_FLAGs {
-    OPTION_FLAG_NULL          = ( OPTION_NULL ),                                                    //    (0);
-    OPTION_FLAG_HELP          = ( 1 << ( OPTION_HELP      - 1 ) ),                                  //    (1);
-    OPTION_FLAG_VERSION       = ( 1 << ( OPTION_VERSION   - 1 ) ),                                  //    (2);
-    OPTION_FLAG_QUIET         = ( 1 << ( OPTION_QUIET     - 1 ) ),                                  //    (4);
-    OPTION_FLAG_DEBUG         = ( 1 << ( OPTION_DEBUG     - 1 ) ),                                  //    (8);
-    OPTION_FLAG_FORCE         = ( 1 << ( OPTION_FORCE     - 1 ) ),                                  //   (16);
-    OPTION_FLAG_RECURSIVE     = ( 1 << ( OPTION_RECURSIVE - 1 ) ),                                  //   (32);
-    OPTION_FLAG_NOFOLLOW      = ( 1 << ( OPTION_NOFOLLOW  - 1 ) ),                                  //   (64);
-    OPTION_FLAG_OVERWRITE     = ( 1 << ( OPTION_OVERWRITE - 1 ) ),                                  //  (128);
-    OPTION_FLAG_IPV4          = ( 1 << ( OPTION_IPV4      - 1 ) ),                                  //  (256);
-    OPTION_FLAG_IPV6          = ( 1 << ( OPTION_IPV6      - 1 ) ),                                  //  (512);
-    OPTION_FLAG_SERVER        = ( 1 << ( OPTION_SERVER    - 1 ) ),                                  // (1024);
-    OPTION_FLAG_CLIENT        = ( 1 << ( OPTION_CLIENT    - 1 ) ),                                  // (2048);
-    OPTION_FLAG_PORT          = ( 1 << ( OPTION_PORT      - 1 ) ),                                  // (4096);
-    OPTION_FLAG_LAST          = ( 1 << ( OPTION_LAST      - 1 ) )                                   // (8192);
 
 struct OPTIONS_DATA {
     enum OPTION_IDs       ID;
@@ -54,7 +38,34 @@ struct OPTIONS_DATA {
     const char           *OptionExt;
     const char           *Help;
     char                 *Var;
-};
+}  ODataDefault[] = {
+     { OPTION_HELP,     "-h",           NULL,       "Show help-screen and exits.",         NULL },
+     { OPTION_HELP,     "--help",       NULL,       "Show help-screen and exits.",         NULL },
+     { OPTION_VERSION,  "-V",           NULL,       "Show version and exits.",             NULL },
+     { OPTION_VERSION,  "--version",    NULL,       "Show version and exits.",             NULL },
+     { OPTION_QUIET,    "-q",           NULL,       "Suppress messages.",                  NULL },
+     { OPTION_QUIET,    "--quiet",      NULL,       "Suppress messages.",                  NULL },
+     { OPTION_DEBUG,    "-d",           NULL,       "Show debug messages.",                NULL },
+     { OPTION_DEBUG,    "--debug",      NULL,       "Show debug messages.",                NULL },
+     { OPTION_FORCE,    "-f",           NULL,       "Try to recover from errors.",         NULL },
+     { OPTION_FORCE,    "--force",      NULL,       "Try to recover from errors.",         NULL },
+     { OPTION_RECURSIVE,"-r",           NULL,       "Dive into directories recursively.",  NULL },
+     { OPTION_RECURSIVE,"--recursive",  NULL,       "Dive into directories recursively.",  NULL },
+     { OPTION_NOFOLLOW, "-n",           NULL,       "Do not follow symbolic links.",       NULL },
+     { OPTION_NOFOLLOW, "--nofollow",   NULL,       "Do not follow symbolic links.",       NULL },
+     { OPTION_OVERWRITE,"-o",           NULL,       "Overwrite existing files.",           NULL },
+     { OPTION_OVERWRITE,"--overwrite",  NULL,       "Overwrite existing files.",           NULL },
+     { OPTION_IPV4,     "-4",           NULL,       "Use IPv4.",                           NULL },
+     { OPTION_IPV4,     "--ipv4",       NULL,       "Use IPv4.",                           NULL },
+     { OPTION_IPV6,     "-6",           NULL,       "Use IPv6.",                           NULL },
+     { OPTION_IPV6,     "--ipv6",       NULL,       "Use IPv6.",                           NULL },
+     { OPTION_SERVER,   "-F",           "=[addr]",  "Work as a server.",                   NULL },
+     { OPTION_SERVER,   "--from",       "=[addr]",  "Work as a server.",                   NULL },
+     { OPTION_CLIENT,   "-T",           "=[addr]",  "Work as a client.",                   NULL },
+     { OPTION_CLIENT,   "--to",         "=[addr]",  "Work as a client.",                   NULL },
+     { OPTION_PORT,     "-p",           "=[port]",  "Set up a port number.",               NULL },
+     { OPTION_PORT,     "--port",       "=[port]",  "Set up a port number.",               NULL },
+     { OPTION_LAST, NULL, NULL, NULL } };
 
 const char *OHelpStr =  " \r\n"
                         "   Usage: transferfiles [options] [file1] [file2] ... \r\n\r\n"
@@ -78,34 +89,6 @@ const char *OHelpStr =  " \r\n"
                         "     -p=[port], \r\n"
                         "     --port=[port]     Set up a port number (which is 45678 by default). \r\n";
 
-struct OPTIONS_DATA ODataDefault[] = {
-     { OPTION_HELP,     "--help",       NULL,       "Show help-screen and exits.",         NULL },
-     { OPTION_HELP,     "-h",           NULL,       "Show help-screen and exits.",         NULL },
-     { OPTION_VERSION,  "--version",    NULL,       "Show version and exits.",             NULL },
-     { OPTION_VERSION,  "-V",           NULL,       "Show version and exits.",             NULL },
-     { OPTION_QUIET,    "--quiet",      NULL,       "Suppress messages.",                  NULL },
-     { OPTION_QUIET,    "-q",           NULL,       "Suppress messages.",                  NULL },
-     { OPTION_DEBUG,    "--debug",      NULL,       "Show debug messages.",                NULL },
-     { OPTION_DEBUG,    "-d",           NULL,       "Show debug messages.",                NULL },
-     { OPTION_FORCE,    "--force",      NULL,       "Try to recover from errors.",         NULL },
-     { OPTION_FORCE,    "-f",           NULL,       "Try to recover from errors.",         NULL },
-     { OPTION_RECURSIVE,"--recursive",  NULL,       "Dive into directories recursively.",  NULL },
-     { OPTION_RECURSIVE,"-r",           NULL,       "Dive into directories recursively.",  NULL },
-     { OPTION_NOFOLLOW, "--nofollow",   NULL,       "Do not follow symbolic links.",       NULL },
-     { OPTION_NOFOLLOW, "-n",           NULL,       "Do not follow symbolic links.",       NULL },
-     { OPTION_OVERWRITE,"--overwrite",  NULL,       "Overwrite existing files.",           NULL },
-     { OPTION_OVERWRITE,"-o",           NULL,       "Overwrite existing files.",           NULL },
-     { OPTION_IPV4,     "--ipv4",       NULL,       "Use IPv4.",                           NULL },
-     { OPTION_IPV4,     "-4",           NULL,       "Use IPv4.",                           NULL },
-     { OPTION_IPV6,     "--ipv6",       NULL,       "Use IPv6.",                           NULL },
-     { OPTION_IPV6,     "-6",           NULL,       "Use IPv6.",                           NULL },
-     { OPTION_SERVER,   "--from",       "=[addr]",  "Work as a server.",                   NULL },
-     { OPTION_SERVER,   "-F",           "=[addr]",  "Work as a server.",                   NULL },
-     { OPTION_CLIENT,   "--to",         "=[addr]",  "Work as a client.",                   NULL },
-     { OPTION_CLIENT,   "-T",           "=[addr]",  "Work as a client.",                   NULL },
-     { OPTION_PORT,     "--port",       "=[port]",  "Set up a port number.",               NULL },
-     { OPTION_PORT,     "-p",           "=[port]",  "Set up a port number.",               NULL },
-     { OPTION_LAST, NULL, NULL, NULL } };
 
 /**************************************************************************************************************************
  * ============================================== *** ShowHelp Function *** ============================================= *

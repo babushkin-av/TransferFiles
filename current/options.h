@@ -63,6 +63,23 @@ enum OPTION_IDs {
     OPTION_LAST                                                                                     //
 };
 
+enum OPTION_FLAGs {
+    OPTION_FLAG_NULL          = ( OPTION_NULL ),                                                    //    (0);
+    OPTION_FLAG_HELP          = ( 1 << ( OPTION_HELP      - 1 ) ),                                  //    (1);
+    OPTION_FLAG_VERSION       = ( 1 << ( OPTION_VERSION   - 1 ) ),                                  //    (2);
+    OPTION_FLAG_QUIET         = ( 1 << ( OPTION_QUIET     - 1 ) ),                                  //    (4);
+    OPTION_FLAG_DEBUG         = ( 1 << ( OPTION_DEBUG     - 1 ) ),                                  //    (8);
+    OPTION_FLAG_FORCE         = ( 1 << ( OPTION_FORCE     - 1 ) ),                                  //   (16);
+    OPTION_FLAG_RECURSIVE     = ( 1 << ( OPTION_RECURSIVE - 1 ) ),                                  //   (32);
+    OPTION_FLAG_NOFOLLOW      = ( 1 << ( OPTION_NOFOLLOW  - 1 ) ),                                  //   (64);
+    OPTION_FLAG_OVERWRITE     = ( 1 << ( OPTION_OVERWRITE - 1 ) ),                                  //  (128);
+    OPTION_FLAG_IPV4          = ( 1 << ( OPTION_IPV4      - 1 ) ),                                  //  (256);
+    OPTION_FLAG_IPV6          = ( 1 << ( OPTION_IPV6      - 1 ) ),                                  //  (512);
+    OPTION_FLAG_SERVER        = ( 1 << ( OPTION_SERVER    - 1 ) ),                                  // (1024);
+    OPTION_FLAG_CLIENT        = ( 1 << ( OPTION_CLIENT    - 1 ) ),                                  // (2048);
+    OPTION_FLAG_PORT          = ( 1 << ( OPTION_PORT      - 1 ) ),                                  // (4096);
+    OPTION_FLAG_LAST          = ( 1 << ( OPTION_LAST      - 1 ) )                                   // (8192);
+
 /**************************************************************************************************************************
  * ============================================= *** Function Prototypes *** ============================================ *
  **************************************************************************************************************************/
