@@ -100,7 +100,14 @@ const char *OHelpStr =  " \r\n"
 
 int ShowHelp(void){
 
-return( puts(OHelpStr) ); }
+    size_t OptionMaxWidth = 0;
+
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
+    {
+        size_t OptionWidth = strlen(DataBase->Option);
+        if( OptionWidth > OptionMaxWidth )  OptionMaxWidth = OptionWidth;
+    };
+return(  ); }
 
 /**************************************************************************************************************************
  * ============================================ *** ShowVersion Function *** ============================================ *
@@ -143,14 +150,12 @@ return(OPTION_NULL); }
 
 unsigned int GetOptionFlag(const unsigned int ID){
 
-    struct OPTIONS_DATA *DataBase = &ODataDefault[0];
+    unsigned int Result = 0;
 
-    while(DataBase->Option)
-    {
-        if( (DataBase->ID) == ID)  break;
-        DataBase++;
-    };
-return(DataBase->Flag); }
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
+        if( (DataBase->ID) == ID) {   Result = (unsigned int)(DataBase->Flag);  break;   };
+
+return(Result); }
 
 /**************************************************************************************************************************
  * ========================================== *** GetOptionHelp() Function *** ========================================== *
@@ -193,7 +198,7 @@ size_t SetOptionVar(const unsigned int ID, char *Var){
 
     while(DataBase->Option)
     {
-        if( (DataBase->ID) == ID)  {   DataBase->Var = Var;  result++;   };
+        if( (DataBase->ID) == ID) {   DataBase->Var = Var;  Result++;   };
         DataBase++;
     };
 return(Result); }
