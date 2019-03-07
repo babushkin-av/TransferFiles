@@ -1,10 +1,15 @@
 /**************************************************************************************************************************
  *                                                                                                                        *
- *     File: options.h (version 0.9).                                                                                     *
- *     Dependency: base.h.                                                                                                *
- *     Distribution: source/object code.                                                                                  *
- *     License: GNU Lesser Public License version 2.1.                                                                    *
- *     Desription: .                                                                                                      *
+ *     File: . . . . . Options.h                                                                                          *
+ *     Status: . . . . version 0.9;                                                                                       *
+ *     Dependency: . . none;                                                                                              *
+ *     Distribution: . source/object code;                                                                                *
+ *     OS family:  . . Windows [XP+], Linux [2.6.16+], BSD [4.4+];                                                        *
+ *     Platform: . . . x86/x86-64, ARM;                                                                                   *
+ *     License:  . . . LGPL [2.1+].                                                                                       *
+ *                                                                                                                        *
+ *     Short desription:                                                                                                  *
+ *          .                                                                                                             *
  *                                                                                                                        *
  **************************************************************************************************************************
  *                                                                                                                        *
@@ -78,7 +83,7 @@ enum OPTION_FLAGs {
     OPTION_FLAG_SERVER        = ( 1 << ( OPTION_SERVER    - 1 ) ),                                  // (1024);
     OPTION_FLAG_CLIENT        = ( 1 << ( OPTION_CLIENT    - 1 ) ),                                  // (2048);
     OPTION_FLAG_PORT          = ( 1 << ( OPTION_PORT      - 1 ) ),                                  // (4096);
-    OPTION_FLAG_LAST          = ( 1 << ( OPTION_LAST      - 1 ) )                                   // (8192);
+    OPTION_FLAG_LAST          = ( OPTION_NULL )                                                     //    (0);
 
 /**************************************************************************************************************************
  * ============================================= *** Function Prototypes *** ============================================ *
@@ -97,7 +102,7 @@ extern "С" {
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 
-    unsigned int GetOptionIndex(unsigned int ID);
+    unsigned int GetOptionFlag(unsigned int ID);
 
 /* ---------------------------------------------------------------------------------------------------------------------- */
 

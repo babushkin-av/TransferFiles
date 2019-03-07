@@ -4,7 +4,6 @@
  *     Type:  (options.c).                                                                                                *
  *     Distribution: source/object code.                                                                                  *
  *     License: GNU Lesser Public License version 2.1.                                                                    *
- *     Dependency: scandir.h.                                                                                             *
  *     Desription: .                                                                                                      *
  *                                                                                                                        *
  **************************************************************************************************************************
@@ -24,7 +23,7 @@
  * =============================================== *** Header Files *** ================================================= *
  **************************************************************************************************************************/
 
-#include "options.h"
+#include "Options.h"
 
 /**************************************************************************************************************************
  * ============================================== *** Global Variables *** ============================================== *
@@ -39,33 +38,33 @@ struct OPTIONS_DATA {
     const char           *Help;
     char                 *Var;
 }  ODataDefault[] = {
-     { OPTION_HELP,     "-h",           NULL,       "Show help-screen and exits.",         NULL },
-     { OPTION_HELP,     "--help",       NULL,       "Show help-screen and exits.",         NULL },
-     { OPTION_VERSION,  "-V",           NULL,       "Show version and exits.",             NULL },
-     { OPTION_VERSION,  "--version",    NULL,       "Show version and exits.",             NULL },
-     { OPTION_QUIET,    "-q",           NULL,       "Suppress messages.",                  NULL },
-     { OPTION_QUIET,    "--quiet",      NULL,       "Suppress messages.",                  NULL },
-     { OPTION_DEBUG,    "-d",           NULL,       "Show debug messages.",                NULL },
-     { OPTION_DEBUG,    "--debug",      NULL,       "Show debug messages.",                NULL },
-     { OPTION_FORCE,    "-f",           NULL,       "Try to recover from errors.",         NULL },
-     { OPTION_FORCE,    "--force",      NULL,       "Try to recover from errors.",         NULL },
-     { OPTION_RECURSIVE,"-r",           NULL,       "Dive into directories recursively.",  NULL },
-     { OPTION_RECURSIVE,"--recursive",  NULL,       "Dive into directories recursively.",  NULL },
-     { OPTION_NOFOLLOW, "-n",           NULL,       "Do not follow symbolic links.",       NULL },
-     { OPTION_NOFOLLOW, "--nofollow",   NULL,       "Do not follow symbolic links.",       NULL },
-     { OPTION_OVERWRITE,"-o",           NULL,       "Overwrite existing files.",           NULL },
-     { OPTION_OVERWRITE,"--overwrite",  NULL,       "Overwrite existing files.",           NULL },
-     { OPTION_IPV4,     "-4",           NULL,       "Use IPv4.",                           NULL },
-     { OPTION_IPV4,     "--ipv4",       NULL,       "Use IPv4.",                           NULL },
-     { OPTION_IPV6,     "-6",           NULL,       "Use IPv6.",                           NULL },
-     { OPTION_IPV6,     "--ipv6",       NULL,       "Use IPv6.",                           NULL },
-     { OPTION_SERVER,   "-F",           "=[addr]",  "Work as a server.",                   NULL },
-     { OPTION_SERVER,   "--from",       "=[addr]",  "Work as a server.",                   NULL },
-     { OPTION_CLIENT,   "-T",           "=[addr]",  "Work as a client.",                   NULL },
-     { OPTION_CLIENT,   "--to",         "=[addr]",  "Work as a client.",                   NULL },
-     { OPTION_PORT,     "-p",           "=[port]",  "Set up a port number.",               NULL },
-     { OPTION_PORT,     "--port",       "=[port]",  "Set up a port number.",               NULL },
-     { OPTION_LAST, NULL, NULL, NULL } };
+     { OPTION_HELP,      OPTION_FLAG_HELP,       "-h",           NULL,       "Show help-screen and exits.",         NULL },
+     { OPTION_HELP,      OPTION_FLAG_HELP,       "--help",       NULL,       "Show help-screen and exits.",         NULL },
+     { OPTION_VERSION,   OPTION_FLAG_VERSION,    "-V",           NULL,       "Show version and exits.",             NULL },
+     { OPTION_VERSION,   OPTION_FLAG_VERSION,    "--version",    NULL,       "Show version and exits.",             NULL },
+     { OPTION_QUIET,     OPTION_FLAG_QUIET,      "-q",           NULL,       "Suppress messages.",                  NULL },
+     { OPTION_QUIET,     OPTION_FLAG_QUIET,      "--quiet",      NULL,       "Suppress messages.",                  NULL },
+     { OPTION_DEBUG,     OPTION_FLAG_DEBUG,      "-d",           NULL,       "Show debug messages.",                NULL },
+     { OPTION_DEBUG,     OPTION_FLAG_DEBUG,      "--debug",      NULL,       "Show debug messages.",                NULL },
+     { OPTION_FORCE,     OPTION_FLAG_FORCE,      "-f",           NULL,       "Try to recover from errors.",         NULL },
+     { OPTION_FORCE,     OPTION_FLAG_FORCE,      "--force",      NULL,       "Try to recover from errors.",         NULL },
+     { OPTION_RECURSIVE, OPTION_FLAG_RECURSIVE,  "-r",           NULL,       "Dive into directories recursively.",  NULL },
+     { OPTION_RECURSIVE, OPTION_FLAG_RECURSIVE,  "--recursive",  NULL,       "Dive into directories recursively.",  NULL },
+     { OPTION_NOFOLLOW,  OPTION_FLAG_NOFOLLOW,   "-n",           NULL,       "Do not follow symbolic links.",       NULL },
+     { OPTION_NOFOLLOW,  OPTION_FLAG_NOFOLLOW,   "--nofollow",   NULL,       "Do not follow symbolic links.",       NULL },
+     { OPTION_OVERWRITE, OPTION_FLAG_OVERWRITE,  "-o",           NULL,       "Overwrite existing files.",           NULL },
+     { OPTION_OVERWRITE, OPTION_FLAG_OVERWRITE,  "--overwrite",  NULL,       "Overwrite existing files.",           NULL },
+     { OPTION_IPV4,      OPTION_FLAG_IPV4,       "-4",           NULL,       "Use IPv4.",                           NULL },
+     { OPTION_IPV4,      OPTION_FLAG_IPV4,       "--ipv4",       NULL,       "Use IPv4.",                           NULL },
+     { OPTION_IPV6,      OPTION_FLAG_IPV6,       "-6",           NULL,       "Use IPv6.",                           NULL },
+     { OPTION_IPV6,      OPTION_FLAG_IPV6,       "--ipv6",       NULL,       "Use IPv6.",                           NULL },
+     { OPTION_SERVER,    OPTION_FLAG_SERVER,     "-F",           "=[addr]",  "Work as a server.",                   NULL },
+     { OPTION_SERVER,    OPTION_FLAG_SERVER,     "--from",       "=[addr]",  "Work as a server.",                   NULL },
+     { OPTION_CLIENT,    OPTION_FLAG_CLIENT,     "-T",           "=[addr]",  "Work as a client.",                   NULL },
+     { OPTION_CLIENT,    OPTION_FLAG_CLIENT,     "--to",         "=[addr]",  "Work as a client.",                   NULL },
+     { OPTION_PORT,      OPTION_FLAG_PORT,       "-p",           "=[port]",  "Set up a port number.",               NULL },
+     { OPTION_PORT,      OPTION_FLAG_PORT,       "--port",       "=[port]",  "Set up a port number.",               NULL },
+     { OPTION_LAST,      OPTION_FLAG_LAST,       NULL,           NULL,       NULL,                                  NULL } };
 
 const char *OHelpStr =  " \r\n"
                         "   Usage: transferfiles [options] [file1] [file2] ... \r\n\r\n"
@@ -111,7 +110,7 @@ return( printf("\r\n This is %s for %s %s (%s version), \r\n Copyleft (c), %s, f
  * ========================================= *** GetOptionIndex() Function *** ========================================== *
  **************************************************************************************************************************/
 
-unsigned int GetOptionIndex(unsigned int ID){
+unsigned int GetOptionFlag(unsigned int ID){
 
     unsigned int Result = 0;
 
