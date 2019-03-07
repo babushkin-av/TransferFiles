@@ -95,18 +95,19 @@ const char *OHelpStr =  " \r\n"
 
 
 /**************************************************************************************************************************
+ * ============================================= *** Function Prototypes *** ============================================ *
+ **************************************************************************************************************************/
+
+size_t GetOptionMaxWidth(void);
+
+/**************************************************************************************************************************
  * ============================================== *** ShowHelp Function *** ============================================= *
  **************************************************************************************************************************/
 
-int ShowHelp(void){
+size_t ShowHelp(void){
 
-    size_t OptionMaxWidth = 0;
+    size_t OptionMaxWidth = GetOptionMaxWidth();
 
-    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
-    {
-        size_t OptionWidth = strlen(DataBase->Option);
-        if( OptionWidth > OptionMaxWidth )  OptionMaxWidth = OptionWidth;
-    };
 return(  ); }
 
 /**************************************************************************************************************************
@@ -189,13 +190,25 @@ return(Result); }
 
 size_t SetOptionVar(const unsigned int ID, char *Var){
 
-    struct OPTIONS_DATA *DataBase = &ODataDefault[0];
-    size_t               Result   = 0;
+    size_t Result = 0;
 
-    while(DataBase->Option)
-    {
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
         if( (DataBase->ID) == ID) {   DataBase->Var = Var;  Result++;   };
-        DataBase++;
+
+return(Result); }
+
+/**************************************************************************************************************************
+ * ======================================== *** GetOptionMaxWidth() Function *** ======================================== *
+ **************************************************************************************************************************/
+
+size_t GetOptionMaxWidth(void){
+
+    size_t Result = 0;
+
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
+    {
+        size_t OptionWidth = strlen(DataBase->Option);
+        if( OptionWidth > Result )  Result = OptionWidth;
     };
 return(Result); }
 
