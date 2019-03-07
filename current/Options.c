@@ -1,10 +1,15 @@
 /**************************************************************************************************************************
  *                                                                                                                        *
- *     File: options.c (version 0.9).                                                                                     *
- *     Type:  (options.c).                                                                                                *
- *     Distribution: source/object code.                                                                                  *
- *     License: GNU Lesser Public License version 2.1.                                                                    *
- *     Desription: .                                                                                                      *
+ *     File: . . . . . Options.c                                                                                          *
+ *     Status: . . . . version 0.9;                                                                                       *
+ *     Dependency: . . none;                                                                                              *
+ *     Distribution: . source/object code;                                                                                *
+ *     OS family:  . . Windows [XP+], Linux [2.6.16+], BSD [4.4+];                                                        *
+ *     Platform: . . . x86/x86-64, ARM;                                                                                   *
+ *     License:  . . . LGPL [2.1+].                                                                                       *
+ *                                                                                                                        *
+ *     Short desription:                                                                                                  *
+ *          .                                                                                                             *
  *                                                                                                                        *
  **************************************************************************************************************************
  *                                                                                                                        *
@@ -107,18 +112,6 @@ return( printf("\r\n This is %s for %s %s (%s version), \r\n Copyleft (c), %s, f
     APP_NAME,OPTIONS_OS_STRING,OPTIONS_DEBUG_STRING,APP_VERSION,__DATE__) ); }
 
 /**************************************************************************************************************************
- * ========================================= *** GetOptionIndex() Function *** ========================================== *
- **************************************************************************************************************************/
-
-unsigned int GetOptionFlag(unsigned int ID){
-
-    unsigned int Result = 0;
-
-    while(ID){   ID>>=1; Result++;   };
-
-return(Result); }
-
-/**************************************************************************************************************************
  * =========================================== *** GetOptionID() Function *** =========================================== *
  **************************************************************************************************************************/
 
@@ -143,6 +136,21 @@ unsigned int GetOptionID(const char *argv){
             if(!strncmp(argv,CurrentOption,strLength))  return(result);
         };
 return(OPTION_NULL); }
+
+/**************************************************************************************************************************
+ * ========================================== *** GetOptionFlag() Function *** ========================================== *
+ **************************************************************************************************************************/
+
+unsigned int GetOptionFlag(const unsigned int ID){
+
+    struct OPTIONS_DATA *DataBase = &ODataDefault[0];
+
+    while(DataBase->Option)
+    {
+        if( (DataBase->ID) == ID)  break;
+        DataBase++;
+    };
+return(DataBase->Flag); }
 
 /**************************************************************************************************************************
  * ========================================== *** GetOptionHelp() Function *** ========================================== *
@@ -181,14 +189,14 @@ return(DataBase->Var); }
 size_t SetOptionVar(const unsigned int ID, char *Var){
 
     struct OPTIONS_DATA *DataBase = &ODataDefault[0];
-    size_t               result   = 0;
+    size_t               Result   = 0;
 
     while(DataBase->Option)
     {
         if( (DataBase->ID) == ID)  {   DataBase->Var = Var;  result++;   };
         DataBase++;
     };
-return(result); }
+return(Result); }
 
 /**************************************************************************************************************************
  * ====================================================================================================================== *
