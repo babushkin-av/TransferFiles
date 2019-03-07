@@ -176,14 +176,12 @@ return(Result); }
 
 char* GetOptionVar(const unsigned int ID){
 
-    struct OPTIONS_DATA *DataBase = &ODataDefault[0];
+    char *Result = NULL;
 
-    while(DataBase->Option)
-    {
-        if( (DataBase->ID) == ID)  break;
-        DataBase++;
-    };
-return(DataBase->Var); }
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
+        if( (DataBase->ID) == ID) {   Result = (unsigned int)(DataBase->Var);  break;   };
+
+return(Result); }
 
 /**************************************************************************************************************************
  * =========================================== *** SetOptionVar() Function *** ========================================== *
