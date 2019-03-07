@@ -163,14 +163,12 @@ return(Result); }
 
 const char* GetOptionHelp(const unsigned int ID){
 
-    struct OPTIONS_DATA *DataBase = &ODataDefault[0];
+    unsigned int Result = 0;
 
-    while(DataBase->Option)
-    {
-        if( (DataBase->ID) == ID)  break;
-        DataBase++;
-    };
-return(DataBase->Help); }
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
+        if( (DataBase->ID) == ID) {   Result = (unsigned int)(DataBase->Help);  break;   };
+
+return(Result); }
 
 /**************************************************************************************************************************
  * =========================================== *** GetOptionVar() Function *** ========================================== *
