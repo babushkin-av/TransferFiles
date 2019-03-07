@@ -98,6 +98,8 @@ const char *OHelpStr =  " \r\n"
  * ============================================= *** Function Prototypes *** ============================================ *
  **************************************************************************************************************************/
 
+char*  GetOptionShort(const unsigned int ID);
+char*  GetOptionLong(const unsigned int ID);
 size_t GetOptionMaxWidth(void);
 
 /**************************************************************************************************************************
@@ -180,7 +182,7 @@ char* GetOptionVar(const unsigned int ID){
     char *Result = NULL;
 
     for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
-        if( (DataBase->ID) == ID) {   Result = (unsigned int)(DataBase->Var);  break;   };
+        if( (DataBase->ID) == ID) {   Result = (char*)(DataBase->Var);  break;   };
 
 return(Result); }
 
@@ -194,6 +196,19 @@ size_t SetOptionVar(const unsigned int ID, char *Var){
 
     for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
         if( (DataBase->ID) == ID) {   DataBase->Var = Var;  Result++;   };
+
+return(Result); }
+
+/**************************************************************************************************************************
+ * ========================================== *** GetOptionShort() Function *** ========================================= *
+ **************************************************************************************************************************/
+
+char* GetOptionShort(const unsigned int ID){
+
+    char *Result = NULL;
+
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (Result=(char*)(DataBase->Option)); DataBase++)
+        if( (DataBase->ID) == ID)  if( !strncmp(Result,"-") )  break;
 
 return(Result); }
 
