@@ -70,37 +70,28 @@ struct OPTIONS_DATA {
      { OPTION_PORT,      OPTION_FLAG_PORT,       "--port",       "=[port]",  "Set up a port number.",               NULL },
      { OPTION_LAST,      OPTION_FLAG_LAST,       NULL,           NULL,       NULL,                                  NULL } };
 
+const char *OPTION_SHORT = "-", *OPTION_LONG = "--";
+
 /**************************************************************************************************************************
  * ============================================= *** Function Prototypes *** ============================================ *
  **************************************************************************************************************************/
 
-char*  GetOptionShort(const unsigned int ID);
-char*  GetOptionLong(const unsigned int ID);
-size_t GetOptionMaxWidth(void);
+char*  GetOption(const unsigned int ID, const bool Long);
+size_t GetOptionMaxWidth(bool Long);
 
 /**************************************************************************************************************************
  * ========================================== *** GetOptionShort() Function *** ========================================= *
  **************************************************************************************************************************/
 
-char* GetOptionShort(const unsigned int ID){
+char* GetOption(const unsigned int ID, const bool Long){
 
     char *Result = NULL;
+    char *signOption;
+
+    if( Long )  signOption = "--";  else  signOption = "-";
 
     for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (Result=(char*)(DataBase->Option)); DataBase++)
-        if( (DataBase->ID) == ID)  if( !strncmp(Result,"-") )  break;
-
-return(Result); }
-
-/**************************************************************************************************************************
- * ========================================== *** GetOptionLong() Function *** ========================================== *
- **************************************************************************************************************************/
-
-char* GetOptionLong(const unsigned int ID){
-
-    char *Result = NULL;
-
-    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (Result=(char*)(DataBase->Option)); DataBase++)
-        if( (DataBase->ID) == ID)  if( !strncmp(Result,"--") )  break;
+        if( (DataBase->ID) == ID)  if( !strncmp(Result,signOption) )  break;
 
 return(Result); }
 
@@ -108,13 +99,14 @@ return(Result); }
  * ===================================== *** GetOptionShortMaxWidth() Function *** ====================================== *
  **************************************************************************************************************************/
 
-size_t GetOptionShortMaxWidth(void){
+size_t GetOptionMaxWidth(void){
 
     size_t Result = 0;
     char  *dbOption;
+    char  *signOption;
 
     for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (dbOption=(DataBase->Option)); DataBase++)
-        if( !strncmp(dbOption,"--")
+        if( !strncmp(dbOption,"-")
         {
             size_t OptionWidth = strlen(DataBase->Option);
             char  *dbOptionExt = (DataBase->OptionExt);
