@@ -103,12 +103,58 @@ char*  GetOptionLong(const unsigned int ID);
 size_t GetOptionMaxWidth(void);
 
 /**************************************************************************************************************************
+ * ========================================== *** GetOptionShort() Function *** ========================================= *
+ **************************************************************************************************************************/
+
+char* GetOptionShort(const unsigned int ID){
+
+    char *Result = NULL;
+
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (Result=(char*)(DataBase->Option)); DataBase++)
+        if( (DataBase->ID) == ID)  if( !strncmp(Result,"-") )  break;
+
+return(Result); }
+
+/**************************************************************************************************************************
+ * ========================================== *** GetOptionLong() Function *** ========================================== *
+ **************************************************************************************************************************/
+
+char* GetOptionShort(const unsigned int ID){
+
+    char *Result = NULL;
+
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (Result=(char*)(DataBase->Option)); DataBase++)
+        if( (DataBase->ID) == ID)  if( !strncmp(Result,"--") )  break;
+
+return(Result); }
+
+/**************************************************************************************************************************
+ * ======================================== *** GetOptionMaxWidth() Function *** ======================================== *
+ **************************************************************************************************************************/
+
+size_t GetOptionMaxWidth(void){
+
+    size_t Result = 0;
+
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
+    {
+        size_t OptionWidth = strlen(DataBase->Option);
+        if( OptionWidth > Result )  Result = OptionWidth;
+    };
+return(Result); }
+
+/**************************************************************************************************************************
  * ============================================== *** ShowHelp Function *** ============================================= *
  **************************************************************************************************************************/
 
 size_t ShowHelp(void){
 
     size_t OptionMaxWidth = GetOptionMaxWidth();
+
+    for(unsigned int i=OPTION_HELP; i<OPTION_LAST; i++)
+    {
+        printf("  %s, %*s  \r\n",GetOptionShort(i),OptionMaxWidth,GetOptionLong(i));
+    };
 
 return(  ); }
 
@@ -197,34 +243,6 @@ size_t SetOptionVar(const unsigned int ID, char *Var){
     for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
         if( (DataBase->ID) == ID) {   DataBase->Var = Var;  Result++;   };
 
-return(Result); }
-
-/**************************************************************************************************************************
- * ========================================== *** GetOptionShort() Function *** ========================================= *
- **************************************************************************************************************************/
-
-char* GetOptionShort(const unsigned int ID){
-
-    char *Result = NULL;
-
-    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (Result=(char*)(DataBase->Option)); DataBase++)
-        if( (DataBase->ID) == ID)  if( !strncmp(Result,"-") )  break;
-
-return(Result); }
-
-/**************************************************************************************************************************
- * ======================================== *** GetOptionMaxWidth() Function *** ======================================== *
- **************************************************************************************************************************/
-
-size_t GetOptionMaxWidth(void){
-
-    size_t Result = 0;
-
-    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
-    {
-        size_t OptionWidth = strlen(DataBase->Option);
-        if( OptionWidth > Result )  Result = OptionWidth;
-    };
 return(Result); }
 
 /**************************************************************************************************************************
