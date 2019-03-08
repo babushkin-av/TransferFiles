@@ -34,7 +34,6 @@
  * ============================================== *** Global Variables *** ============================================== *
  **************************************************************************************************************************/
 
-
 struct OPTIONS_DATA {
     enum OPTION_IDs       ID;
     enum OPTION_FLAGs     Flag;
@@ -70,29 +69,6 @@ struct OPTIONS_DATA {
      { OPTION_PORT,      OPTION_FLAG_PORT,       "-p",           "=[port]",  "Set up a port number.",               NULL },
      { OPTION_PORT,      OPTION_FLAG_PORT,       "--port",       "=[port]",  "Set up a port number.",               NULL },
      { OPTION_LAST,      OPTION_FLAG_LAST,       NULL,           NULL,       NULL,                                  NULL } };
-
-const char *OHelpStr =  " \r\n"
-                        "   Usage: transferfiles [options] [file1] [file2] ... \r\n\r\n"
-                        "   Options: \r\n\r\n"
-                        "     -h, --help        Show this help-screen and exits. \r\n\r\n"
-                        "     -V, --version     Show version info and exits. \r\n\r\n"
-                        "     -q, --quiet       Suppress informational messages. However, \r\n"
-                        "                       error reports will be displayed. \r\n\r\n"
-                        "     -d, --debug       Show debug messages. This supersedes \r\n"
-                        "                       '-q' and/or '--quiet' options. \r\n\r\n"
-                        "     -f, --force       Try to recover from errors. \r\n\r\n"
-                        "     -r, --recursive   Dive into directories recursively. \r\n\r\n"
-                        "     -n  --nofollow    Do not follow symbolic links. \r\n\r\n"
-                        "     -o  --overwrite   Overwrite existing files. \r\n\r\n"
-                        "     -4, --ipv4,       This is a hint as to which Protocol to use \r\n"
-                        "     -6, --ipv6        when you specify a host name. \r\n\r\n"
-                        "     -T=[addr],        Work as a client sending files TO [addr] \r\n"
-                        "     --to=[addr]       (which is localhost by default). \r\n\r\n"
-                        "     -F=[addr],        Work as a server reciving files FROM [addr] \r\n"
-                        "     --from=[addr]     (which is INADDR_ANY by default). \r\n\r\n"
-                        "     -p=[port], \r\n"
-                        "     --port=[port]     Set up a port number (which is 45678 by default). \r\n";
-
 
 /**************************************************************************************************************************
  * ============================================= *** Function Prototypes *** ============================================ *
