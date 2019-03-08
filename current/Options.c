@@ -77,7 +77,7 @@ const char *OPTION_SHORT = "-", *OPTION_LONG = "--";
  **************************************************************************************************************************/
 
 char*  GetOption(const unsigned int ID, const bool Long);
-size_t GetOptionMaxWidth(bool Long);
+size_t GetOptionMaxWidth(const bool Long);
 
 /**************************************************************************************************************************
  * ========================================== *** GetOptionShort() Function *** ========================================= *
@@ -85,13 +85,13 @@ size_t GetOptionMaxWidth(bool Long);
 
 char* GetOption(const unsigned int ID, const bool Long){
 
-    char *Result = NULL;
-    char *signOption;
+    char  *Result = NULL;
+    size_t oSign;
 
-    if( Long )  signOption = "--";  else  signOption = "-";
+    if( Long )  oSign = 2;  else  oSign = 1;
 
     for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (Result=(char*)(DataBase->Option)); DataBase++)
-        if( (DataBase->ID) == ID)  if( !strncmp(Result,signOption) )  break;
+        if( (DataBase->ID) == ID)  if( !strncmp(Result,"--",oSign) )  break;
 
 return(Result); }
 
@@ -99,14 +99,16 @@ return(Result); }
  * ===================================== *** GetOptionShortMaxWidth() Function *** ====================================== *
  **************************************************************************************************************************/
 
-size_t GetOptionMaxWidth(void){
+size_t GetOptionMaxWidth(const bool Long){
 
     size_t Result = 0;
+    size_t oSign;
     char  *dbOption;
-    char  *signOption;
+
+    if( Long )  oSign = 2;  else  oSign = 1;
 
     for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (dbOption=(DataBase->Option)); DataBase++)
-        if( !strncmp(dbOption,"-")
+        if( !strncmp(dbOption,"--",oSign);
         {
             size_t OptionWidth = strlen(DataBase->Option);
             char  *dbOptionExt = (DataBase->OptionExt);
