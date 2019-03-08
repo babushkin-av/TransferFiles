@@ -95,7 +95,7 @@ return(Result); }
  * ========================================== *** GetOptionLong() Function *** ========================================== *
  **************************************************************************************************************************/
 
-char* GetOptionShort(const unsigned int ID){
+char* GetOptionLong(const unsigned int ID){
 
     char *Result = NULL;
 
@@ -105,18 +105,23 @@ char* GetOptionShort(const unsigned int ID){
 return(Result); }
 
 /**************************************************************************************************************************
- * ======================================== *** GetOptionMaxWidth() Function *** ======================================== *
+ * ===================================== *** GetOptionShortMaxWidth() Function *** ====================================== *
  **************************************************************************************************************************/
 
-size_t GetOptionMaxWidth(void){
+size_t GetOptionShortMaxWidth(void){
 
     size_t Result = 0;
+    char  *dbOption;
 
-    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
-    {
-        size_t OptionWidth = strlen(DataBase->Option);
-        if( OptionWidth > Result )  Result = OptionWidth;
-    };
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (dbOption=(DataBase->Option)); DataBase++)
+        if( !strncmp(dbOption,"--")
+        {
+            size_t OptionWidth = strlen(DataBase->Option);
+            char  *dbOptionExt = (DataBase->OptionExt);
+
+            if( dbOptionExt ) OptionWidth = OptionWidth + strlen(dbOptionExt);
+            if( OptionWidth > Result )  Result = OptionWidth;
+        };
 return(Result); }
 
 /**************************************************************************************************************************
