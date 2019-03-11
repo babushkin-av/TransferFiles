@@ -193,11 +193,15 @@ return(Result); }
 
 size_t FormatHelp(char *strOut){
 
-    size_t ShortOptionMaxWidth = GetOptionMaxWidth(false);
-    size_t LongOptionMaxWidth  = GetOptionMaxWidth(true);
+    size_t Result = 0;
 
-    sprintf(strOut,"  %z  \r\n",ShortOptionMaxWidth);
+    if( strOut )
+    {
+        size_t ShortOptionMaxWidth = GetOptionMaxWidth(false);
+        size_t LongOptionMaxWidth  = GetOptionMaxWidth(true);
 
+        sprintf(strOut,"  %z  \r\n",ShortOptionMaxWidth);
+    };
 return(0); }
 
 /**************************************************************************************************************************
@@ -205,6 +209,13 @@ return(0); }
  **************************************************************************************************************************/
 
 size_t ShowHelp(void){
+
+    size_t Result = 0;
+
+    size_t ShortOptionMaxWidth = GetOptionMaxWidth(false);
+    size_t LongOptionMaxWidth  = GetOptionMaxWidth(true);
+
+    sprintf(strOut,"  %z  \r\n",ShortOptionMaxWidth);
 
 return(0); }
 
