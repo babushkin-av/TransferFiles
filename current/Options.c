@@ -191,11 +191,20 @@ return(Result); }
  * ============================================ *** FormatHelp() Function *** =========================================== *
  **************************************************************************************************************************/
 
-size_t FormatHelp(void){
+size_t FormatHelp(char *strOut){
 
-    size_t OptionMaxWidth = GetOptionMaxWidth((const bool)0);
+    size_t ShortOptionMaxWidth = GetOptionMaxWidth(false);
+    size_t LongOptionMaxWidth  = GetOptionMaxWidth(true);
 
-    printf("  %z  \r\n",OptionMaxWidth);
+    sprintf(strOut,"  %z  \r\n",ShortOptionMaxWidth);
+
+return(0); }
+
+/**************************************************************************************************************************
+ * ============================================= *** ShowHelp() Function *** ============================================ *
+ **************************************************************************************************************************/
+
+size_t ShowHelp(void){
 
 return(0); }
 
