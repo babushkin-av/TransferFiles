@@ -53,7 +53,6 @@
 #    define  OPTIONS_OS_STRING         ""
 #endif
 
-
 enum OPTION_IDs {
     OPTION_NULL,                                                                                    //
     OPTION_HELP,                                                                                    //  Show help-screen and exits.
@@ -88,6 +87,15 @@ enum OPTION_FLAGs {
     OPTION_FLAG_CLIENT        = ( 1 << ( OPTION_CLIENT    - 1 ) ),                                  // (2048);
     OPTION_FLAG_PORT          = ( 1 << ( OPTION_PORT      - 1 ) ),                                  // (4096);
     OPTION_FLAG_LAST          = ( OPTION_NULL )                                                     //    (0);
+};
+
+struct OPTIONS_DATA {
+    enum OPTION_IDs       ID;
+    enum OPTION_FLAGs     Flag;
+    const char           *Option;
+    const char           *OptionExt;
+    const char           *Help;
+    char                 *Var;
 };
 
 /**************************************************************************************************************************
