@@ -4,7 +4,7 @@
  *     Status: . . . . version 0.9;                                                                                       *
  *     Dependency: . . none;                                                                                              *
  *     Distribution: . source/object code;                                                                                *
- *     OS family:  . . Windows [XP+], Linux [2.6.16+], BSD [4.4+];                                                        *
+ *     OS family:  . . Windows [XP+], Linux [2.6.26+], BSD [4.4+];                                                        *
  *     Platform: . . . x86/x86-64, ARM;                                                                                   *
  *     License:  . . . LGPL [2.1+].                                                                                       *
  *                                                                                                                        *
@@ -70,8 +70,6 @@ struct OPTIONS_DATA {
      { OPTION_PORT,      OPTION_FLAG_PORT,       "--port",       "=[port]",  "Set up a port number.",               NULL },
      { OPTION_LAST,      OPTION_FLAG_LAST,       NULL,           NULL,       NULL,                                  NULL } };
 
-const char *OPTION_SHORT = "-", *OPTION_LONG = "--";
-
 /**************************************************************************************************************************
  * ============================================= *** Function Prototypes *** ============================================ *
  **************************************************************************************************************************/
@@ -107,11 +105,11 @@ size_t GetOptionMaxWidth(const bool Long){
 
     if( Long )  oSign = 2;  else  oSign = 1;
 
-    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (dbOption=(DataBase->Option)); DataBase++)
-        if( !strncmp(dbOption,"--",oSign);
+    for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (dbOption=(char*)(DataBase->Option)); DataBase++)
+        if( !strncmp(dbOption,"--",oSign) )
         {
             size_t OptionWidth = strlen(DataBase->Option);
-            char  *dbOptionExt = (DataBase->OptionExt);
+            char  *dbOptionExt = (char*)(DataBase->OptionExt);
 
             if( dbOptionExt ) OptionWidth = OptionWidth + strlen(dbOptionExt);
             if( OptionWidth > Result )  Result = OptionWidth;
@@ -119,28 +117,16 @@ size_t GetOptionMaxWidth(const bool Long){
 return(Result); }
 
 /**************************************************************************************************************************
- * ============================================== *** ShowHelp Function *** ============================================= *
+ * ============================================= *** ShowHelp() Function *** ============================================ *
  **************************************************************************************************************************/
 
-size_t ShowHelp(void){
+size_t FormatHelp(void){
 
-    size_t OptionMaxWidth = GetOptionMaxWidth();
+    size_t OptionMaxWidth = GetOptionMaxWidth((const bool)0);
 
-    for(unsigned int i=OPTION_HELP; i<OPTION_LAST; i++)
-    {
-        printf("  %s, %*s  \r\n",GetOptionShort(i),OptionMaxWidth,GetOptionLong(i));
-    };
+    printf("  %z  \r\n",OptionMaxWidth);
 
-return(  ); }
-
-/**************************************************************************************************************************
- * ============================================ *** ShowVersion Function *** ============================================ *
- **************************************************************************************************************************/
-
-int ShowVersion(void){
-
-return( printf("\r\n This is %s for %s %s (%s version), \r\n Copyleft (c), %s, feedback@babushkin.ru.net. \r\n\r\n",
-    APP_NAME,OPTIONS_OS_STRING,OPTIONS_DEBUG_STRING,APP_VERSION,__DATE__) ); }
+return(0); }
 
 /**************************************************************************************************************************
  * =========================================== *** GetOptionID() Function *** =========================================== *
@@ -148,23 +134,23 @@ return( printf("\r\n This is %s for %s %s (%s version), \r\n Copyleft (c), %s, f
 
 unsigned int GetOptionID(const char *argv){
 
-    unsigned int  result;
+    unsigned int  Result;
 
     if(argv)
-        for(struct OPTIONS_DATA *DataBase = &ODataDefault[0]; (result = (DataBase->ID)) < OPTION_LAST; DataBase++)
+        for(struct OPTIONS_DATA *DataBase = &ODataDefault[0]; (Result=(DataBase->ID)) < OPTION_LAST; DataBase++)
         {
             size_t strLength = _POSIX_PATH_MAX;
             char  *CurrentOption, *CurrentParam;
 
-            if( !( CurrentOption = (char*)(DataBase->Option) ) ) break;
-            if( CurrentParam = (char*)(DataBase->OptionExt) )
+            if( !(CurrentOption=(char*)(DataBase->Option)) ) break;
+            if( (CurrentParam=(char*)(DataBase->OptionExt)) )
             {
                 strLength = strlen(CurrentOption);
 
-                char *Separator = (argv + strLength);
-                if( *Separator == *CurrentParam )  SetOptionVar(result,(Separator+1));
+                char *Separator = (char*)(argv + strLength);
+                if( *Separator == *CurrentParam )  SetOptionVar(Result,(Separator+1));
             };
-            if(!strncmp(argv,CurrentOption,strLength))  return(result);
+            if(!strncmp(argv,CurrentOption,strLength))  return(Result);
         };
 return(OPTION_NULL); }
 
@@ -187,12 +173,12 @@ return(Result); }
 
 const char* GetOptionHelp(const unsigned int ID){
 
-    unsigned int Result = 0;
+    char *Result = NULL;
 
     for(struct OPTIONS_DATA *DataBase=&ODataDefault[0]; (DataBase->Option); DataBase++)
-        if( (DataBase->ID) == ID) {   Result = (unsigned int)(DataBase->Help);  break;   };
+        if( (DataBase->ID) == ID) {   Result = (char*)(DataBase->Help);  break;   };
 
-return(Result); }
+return((const char*)Result); }
 
 /**************************************************************************************************************************
  * =========================================== *** GetOptionVar() Function *** ========================================== *
